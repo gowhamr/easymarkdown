@@ -1,3 +1,28 @@
+    /* ─── Theme Tokens ─────────────────────────────── */
+    :root {
+      --c-primary:       #1a73e8;
+      --c-primary-dk:    #1557b0;
+      --c-primary-lt:    #e8f0fe;
+      --c-accent:        #0d9488;
+      --c-surface:       #ffffff;
+      --c-surface-1:     #f8f9fa;
+      --c-surface-2:     #f1f3f4;
+      --c-surface-3:     #e8eaed;
+      --c-outline:       #dadce0;
+      --c-text:          #202124;
+      --c-text-2:        #5f6368;
+      --c-text-3:        #9aa0a6;
+      --c-error:         #d93025;
+      --c-success:       #1e8e3e;
+      --c-warn:          #e37400;
+      --c-editor-bg:     #ffffff;
+      --c-editor-text:   #202124;
+      --c-preview-bg:    #ffffff;
+      --shadow-sm: 0 1px 2px rgba(60,64,67,.18), 0 1px 3px 1px rgba(60,64,67,.08);
+      --shadow-md: 0 1px 2px rgba(60,64,67,.22), 0 2px 6px 2px rgba(60,64,67,.12);
+      --shadow-lg: 0 4px 12px rgba(60,64,67,.16), 0 1px 4px rgba(60,64,67,.22);
+      --r-sm: 6px; --r-md: 12px; --r-lg: 18px; --r-xl: 28px;
+      --font: 'DM Sans', system-ui, sans-serif;
       --mono: 'DM Mono', 'Fira Mono', monospace;
       --ease: cubic-bezier(.2,0,0,1);
       --dur: 220ms;
@@ -825,6 +850,3 @@
       transition: top 0.2s;
     }
     .skip-link:focus { top: 10px; }
-  </style>
-</head>
-<body>
