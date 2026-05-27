@@ -174,7 +174,7 @@
     /* ─── Split Screen ─────────────────────────────── */
     .split-screen {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 10px 1fr;
       gap: 0;
       flex: 1;
       min-height: 0;
@@ -182,15 +182,13 @@
     }
     
     .resizer {
-      width: 12px;
-      margin: 0 -6px;
+      width: 10px;
       z-index: 10;
       cursor: col-resize;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: background 0.2s;
-      position: relative;
     }
     .resizer::after {
       content: "";
@@ -208,14 +206,15 @@
       background: rgba(26, 115, 232, 0.05);
     }
     
-    .editor-pane { margin-right: 8px; }
-    .preview-pane { margin-left: 8px; }
-
     @media (max-width: 860px) {
-      .split-screen { grid-template-columns: 1fr !important; }
+      .split-screen { 
+        display: flex; 
+        flex-direction: column; 
+      }
       .resizer { display: none; }
-      .editor-pane { margin-right: 0; }
-      .preview-pane { margin-left: 0; }
+      .editor-pane, .preview-pane { margin: 0 !important; }
+      .split-screen .editor-pane.mobile-hidden,
+      .split-screen .preview-pane.mobile-hidden { display: none; }
     }
 
     /* ─── Cards ────────────────────────────────────── */
@@ -604,11 +603,6 @@
     }
     @media (max-width: 860px) {
       .mobile-view-toggle { display: flex; }
-      .split-screen { display: flex; flex-direction: column; }
-      .split-screen .editor-pane { display: flex; flex-direction: column; }
-      .split-screen .preview-pane { display: flex; flex-direction: column; }
-      .split-screen .editor-pane.mobile-hidden,
-      .split-screen .preview-pane.mobile-hidden { display: none; }
     }
 
     /* ─── Upload Zone ──────────────────────────────── */
@@ -1447,7 +1441,7 @@
       // Restore saved ratio
       const savedRatio = localStorage.getItem('markflow-split-ratio');
       if (savedRatio && window.innerWidth > 860) {
-        container.style.gridTemplateColumns = `${savedRatio}% 0px 1fr`;
+        container.style.gridTemplateColumns = `${savedRatio}% 10px 1fr`;
       }
 
       resizer.addEventListener('mousedown', e => {
@@ -1466,7 +1460,7 @@
         // Constraints
         percentage = Math.max(20, Math.min(percentage, 80));
         
-        container.style.gridTemplateColumns = `${percentage}% 0px 1fr`;
+        container.style.gridTemplateColumns = `${percentage}% 10px 1fr`;
         localStorage.setItem('markflow-split-ratio', percentage);
       });
 
