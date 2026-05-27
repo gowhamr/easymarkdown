@@ -1537,9 +1537,11 @@
       
       let isDragging = false;
 
-      // Restore saved ratio
-      const savedRatio = localStorage.getItem('markflow-split-ratio');
-      if (savedRatio && window.innerWidth > 860) {
+      // Restore saved ratio or use a 70/30 default for editor focus
+      let savedRatio = localStorage.getItem('markflow-split-ratio');
+      if (!savedRatio) savedRatio = 70; // 70% Editor focus by default
+      
+      if (window.innerWidth > 860) {
         container.style.gridTemplateColumns = `${savedRatio}% 10px 1fr`;
       }
 
