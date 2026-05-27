@@ -865,8 +865,23 @@
     }
 
     /* ─── Focus ring ───────────────────────────────── */
-    :focus-visible {
-      outline: 2px solid var(--c-primary); outline-offset: 2px;
+    *:focus { outline: none; }
+    *:focus-visible {
+      outline: 2px solid var(--c-primary);
+      outline-offset: 3px;
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--c-primary) 20%, transparent);
+    }
+
+    /* ─── Reduced Motion ───────────────────────────── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+      .app-bar__logo:hover .app-bar__icon { transform: none !important; }
+      .icon-btn:active, .btn-filled:active, .btn-tonal:active, .tb-btn:active { transform: none !important; }
     }
 
     /* ─── Responsive tweaks ────────────────────────── */
@@ -879,13 +894,25 @@
     @media (max-width: 480px) {
       .app-bar__title span:not(:first-child) { display: none; }
     }
+  <style>
+    /* ─── Skip Link ────────────────────────────────── */
+    .skip-link {
+      position: absolute;
+      top: -100px; left: 10px;
+      background: var(--c-primary); color: white;
+      padding: 10px 20px; border-radius: var(--r-sm);
+      z-index: 10000; text-decoration: none; font-weight: 600;
+      transition: top 0.2s;
+    }
+    .skip-link:focus { top: 10px; }
   </style>
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Skip to content</a>
 
   <!-- ===== TOP APP BAR ===== -->
   <header class="app-bar" role="banner">
-    <a class="app-bar__logo" href="#" aria-label="Easy Markdown home">
+    <a class="app-bar__logo" href="javascript:void(0)" aria-label="Easy Markdown home">
       <div class="app-bar__icon" aria-hidden="true">
         <span class="material-icons">article</span>
       </div>
@@ -917,14 +944,14 @@
       <span class="material-icons">upload_file</span> File Upload
     </button>
     <!-- Mobile view toggle (shown only on small screens) -->
-    <div class="mobile-view-toggle" id="mobile-view-toggle" aria-label="Switch view">
-      <button class="mvt-btn active" id="mvt-edit" onclick="setMobileView('editor')">Edit</button>
-      <button class="mvt-btn" id="mvt-preview" onclick="setMobileView('preview')">Preview</button>
+    <div class="mobile-view-toggle" id="mobile-view-toggle" role="tablist" aria-label="Switch mobile view">
+      <button class="mvt-btn active" id="mvt-edit" role="tab" aria-selected="true" onclick="setMobileView('editor')">Edit</button>
+      <button class="mvt-btn" id="mvt-preview" role="tab" aria-selected="false" onclick="setMobileView('preview')">Preview</button>
     </div>
   </nav>
 
   <!-- ===== MAIN ===== -->
-  <main class="main" role="main">
+  <main class="main" id="main-content" role="main">
 
     <!-- SEO Header for Crawlers -->
     <section class="seo-content" style="display:none">
@@ -949,7 +976,7 @@
           <div class="find-bar hidden" id="find-bar">
             <span class="material-icons" style="font-size:16px;color:var(--c-text-2);">search</span>
             <input class="find-input" id="find-input" placeholder="Find…" oninput="runFind()" onkeydown="findKeyNav(event)" aria-label="Find text"/>
-            <span class="find-count" id="find-count"></span>
+            <span class="find-count" id="find-count" aria-live="polite"></span>
             <span class="find-bar__sep">→</span>
             <input class="find-input" id="replace-input" placeholder="Replace…" style="max-width:120px;" aria-label="Replace with"/>
             <button class="tb-btn" onclick="doReplace(false)" title="Replace one"><span class="material-icons" style="font-size:14px">find_replace</span></button>
@@ -966,24 +993,18 @@
           <div class="editor-toolbar" role="toolbar" aria-label="Text formatting">
             <span class="tb-row-label">Format</span>
             <div class="toolbar-sep"></div>
-            <button class="tb-btn" onclick="insertSyntax('**','**')" title="Bold (Ctrl+B)"><span class="material-icons">format_bold</span></button>
-            <button class="tb-btn" onclick="insertSyntax('*','*')" title="Italic (Ctrl+I)"><span class="material-icons">format_italic</span></button>
-            <button class="tb-btn" onclick="insertSyntax('~~','~~')" title="Strikethrough"><span class="material-icons">strikethrough_s</span></button>
-            <button class="tb-btn" onclick="insertSyntax('`','`')" title="Inline Code"><span class="material-icons">code</span></button>
-            <button class="tb-btn" onclick="insertSyntax('
-```
-','
-```')" title="Code Block"><span class="material-icons">integration_instructions</span></button>
+            <button class="tb-btn" onclick="insertSyntax('**','**')" title="Bold (Ctrl+B)" aria-label="Bold"><span class="material-icons">format_bold</span></button>
+            <button class="tb-btn" onclick="insertSyntax('*','*')" title="Italic (Ctrl+I)" aria-label="Italic"><span class="material-icons">format_italic</span></button>
+            <button class="tb-btn" onclick="insertSyntax('~~','~~')" title="Strikethrough" aria-label="Strikethrough"><span class="material-icons">strikethrough_s</span></button>
+            <button class="tb-btn" onclick="insertSyntax('`','`')" title="Inline Code" aria-label="Inline Code"><span class="material-icons">code</span></button>
+            <button class="tb-btn" onclick="insertSyntax('\n```\n','\n```')" title="Code Block" aria-label="Code Block"><span class="material-icons">integration_instructions</span></button>
             <div class="toolbar-sep"></div>
-            <button class="tb-btn" onclick="insertSyntax('## ','')" title="Heading H2"><span class="material-icons">title</span></button>
-            <button class="tb-btn" onclick="insertSyntax('
-> ','')" title="Blockquote"><span class="material-icons">format_quote</span></button>
-            <button class="tb-btn" onclick="insertSyntax('
-- ','')" title="Bullet List"><span class="material-icons">format_list_bulleted</span></button>
-            <button class="tb-btn" onclick="insertSyntax('
-1. ','')" title="Numbered List"><span class="material-icons">format_list_numbered</span></button>
-            <button class="tb-btn" onclick="insertSyntax('[','](url)')" title="Link"><span class="material-icons">link</span></button>
-            <button class="tb-btn" onclick="insertSyntax('![alt](',')') " title="Image"><span class="material-icons">image</span></button>
+            <button class="tb-btn" onclick="insertSyntax('## ','')" title="Heading H2" aria-label="Heading H2"><span class="material-icons">title</span></button>
+            <button class="tb-btn" onclick="insertSyntax('\n> ','')" title="Blockquote" aria-label="Blockquote"><span class="material-icons">format_quote</span></button>
+            <button class="tb-btn" onclick="insertSyntax('\n- ','')" title="Bullet List" aria-label="Bullet List"><span class="material-icons">format_list_bulleted</span></button>
+            <button class="tb-btn" onclick="insertSyntax('\n1. ','')" title="Numbered List" aria-label="Numbered List"><span class="material-icons">format_list_numbered</span></button>
+            <button class="tb-btn" onclick="insertSyntax('[','](url)')" title="Link" aria-label="Link"><span class="material-icons">link</span></button>
+            <button class="tb-btn" onclick="insertSyntax('![alt](',')') " title="Image" aria-label="Image"><span class="material-icons">image</span></button>
             <div class="toolbar-sep"></div>
             <div class="table-picker-wrap" id="table-picker-wrap">
               <button class="tb-btn" id="table-picker-btn" onclick="toggleTablePicker(event)" title="Insert Table">
@@ -1013,22 +1034,22 @@
           <div class="editor-toolbar editor-toolbar--diagrams" role="toolbar" aria-label="Diagrams">
             <span class="tb-row-label">Diagrams</span>
             <div class="toolbar-sep"></div>
-            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('flowchart')" title="Insert Flowchart">
+            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('flowchart')" title="Insert Flowchart" aria-label="Flowchart">
               <span class="material-icons">account_tree</span><span class="tb-label">Flowchart</span>
             </button>
-            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('sequence')" title="Insert Sequence Diagram">
+            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('sequence')" title="Insert Sequence Diagram" aria-label="Sequence Diagram">
               <span class="material-icons">swap_horiz</span><span class="tb-label">Sequence</span>
             </button>
-            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('pie')" title="Insert Pie Chart">
+            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('pie')" title="Insert Pie Chart" aria-label="Pie Chart">
               <span class="material-icons">pie_chart</span><span class="tb-label">Pie</span>
             </button>
-            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('gantt')" title="Insert Gantt Chart">
+            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('gantt')" title="Insert Gantt Chart" aria-label="Gantt Chart">
               <span class="material-icons">view_timeline</span><span class="tb-label">Gantt</span>
             </button>
-            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('class')" title="Insert Class Diagram">
+            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('class')" title="Insert Class Diagram" aria-label="Class Diagram">
               <span class="material-icons">schema</span><span class="tb-label">Class</span>
             </button>
-            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('er')" title="Insert ER Diagram">
+            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('er')" title="Insert ER Diagram" aria-label="ER Diagram">
               <span class="material-icons">device_hub</span><span class="tb-label">ER</span>
             </button>
           </div>
@@ -1347,8 +1368,15 @@
       _mobileView = v;
       document.getElementById('editor-pane').classList.toggle('mobile-hidden', v !== 'editor');
       document.getElementById('preview-pane').classList.toggle('mobile-hidden', v !== 'preview');
-      document.getElementById('mvt-edit').classList.toggle('active', v === 'editor');
-      document.getElementById('mvt-preview').classList.toggle('active', v === 'preview');
+      
+      const editBtn = document.getElementById('mvt-edit');
+      const prevBtn = document.getElementById('mvt-preview');
+      
+      editBtn.classList.toggle('active', v === 'editor');
+      editBtn.setAttribute('aria-selected', v === 'editor');
+      
+      prevBtn.classList.toggle('active', v === 'preview');
+      prevBtn.setAttribute('aria-selected', v === 'preview');
     }
 
     function currentSource() {
