@@ -1,0 +1,16 @@
+{
+  "name": "Easy Markdown Editor Online",
+  "short_name": "Markflow",
+  "description": "Free online Markdown editor with live preview and export support.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1a73e8",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

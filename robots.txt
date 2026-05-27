@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://gowhamr.github.io/markflow/sitemap.xml

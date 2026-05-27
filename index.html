@@ -3,17 +3,64 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Easy Markdown — Online Editor</title>
-  <meta name="description" content="Easy Markdown — write, preview and export Markdown instantly. Free browser-based editor with live preview, dark mode, syntax highlighting and export to HTML, PDF and Word."/>
+  <title>Easy Markdown Editor Online | Live Preview, Export to PDF & HTML</title>
+  <meta name="description" content="Free online Markdown editor with live preview, syntax highlighting, Mermaid diagrams, dark mode, and export to HTML, PDF, and Word. Fast, privacy-friendly, browser-based Markdown tool."/>
   <meta name="robots" content="index, follow"/>
   <meta name="google-site-verification" content="X3wav61sskcl9Ybg-X7yRRI_AUIyQ9Yd_ayNCv51Qdg" />
+  <link rel="canonical" href="https://gowhamr.github.io/markflow/" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://gowhamr.github.io/markflow/" />
+  <meta property="og:title" content="Easy Markdown Editor Online | Live Preview, Export to PDF & HTML" />
+  <meta property="og:description" content="Free online Markdown editor with live preview, syntax highlighting, Mermaid diagrams, dark mode, and export to HTML, PDF, and Word." />
+  <meta property="og:image" content="https://gowhamr.github.io/markflow/og-image.png" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://gowhamr.github.io/markflow/" />
+  <meta name="twitter:title" content="Easy Markdown Editor Online | Live Preview, Export to PDF & HTML" />
+  <meta name="twitter:description" content="Free online Markdown editor with live preview, syntax highlighting, Mermaid diagrams, dark mode, and export to HTML, PDF, and Word." />
+  <meta name="twitter:image" content="https://gowhamr.github.io/markflow/og-image.png" />
+
+  <!-- PWA & Theme -->
+  <meta name="theme-color" content="#1a73e8">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="icon-180.png">
+
+  <!-- Performance Preconnects -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Easy Markdown",
+    "url": "https://gowhamr.github.io/markflow/",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Any",
+    "description": "Free online Markdown editor with live preview and export support.",
+    "browserRequirements": "Requires JavaScript",
+    "softwareVersion": "1.0.0",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
 
   <!-- Libraries -->
-  <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" id="hljs-light"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" id="hljs-dark" disabled/>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 
@@ -891,6 +938,16 @@
   <!-- ===== MAIN ===== -->
   <main class="main" role="main">
 
+    <!-- SEO Heading (Screen reader friendly & Indexable) -->
+    <section class="seo-header" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;">
+      <h1>Easy Markdown Editor Online | Live Preview, Export to PDF & HTML</h1>
+      <p>
+        Free browser-based Markdown editor with live preview, syntax highlighting, and export support. 
+        Write Markdown and instantly convert to HTML, PDF, and Word documents. 
+        Supports Mermaid diagrams, dark mode, and offline editing.
+      </p>
+    </section>
+
     <!-- ==================== LIVE EDITOR ==================== -->
     <div class="mode-panel active" id="panel-editor">
       <div class="split-screen">
@@ -1104,6 +1161,48 @@
         </div>
       </div>
     </div>
+
+    <!-- SEO & Info Section -->
+    <footer class="seo-info" style="margin-top: 32px; padding: 32px 20px; border-top: 1px solid var(--c-outline); background: var(--c-surface); border-radius: var(--r-lg); font-size: 0.875rem; color: var(--c-text-2); transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px;">
+        <section>
+          <h2 style="font-size: 1.25rem; color: var(--c-text); margin-bottom: 16px; font-weight: 700;">Powerful Markdown Features</h2>
+          <ul style="list-style: none; padding: 0;">
+            <li style="margin-bottom: 10px; display: flex; align-items: flex-start; gap: 8px;">
+              <span class="material-icons" style="font-size: 18px; color: var(--c-success);">check_circle</span>
+              <span><strong>Live Preview:</strong> Real-time, GitHub-style rendering as you type.</span>
+            </li>
+            <li style="margin-bottom: 10px; display: flex; align-items: flex-start; gap: 8px;">
+              <span class="material-icons" style="font-size: 18px; color: var(--c-primary);">download</span>
+              <span><strong>Multi-Format Export:</strong> Save as standalone HTML, professional PDF, or Word documents.</span>
+            </li>
+            <li style="margin-bottom: 10px; display: flex; align-items: flex-start; gap: 8px;">
+              <span class="material-icons" style="font-size: 18px; color: var(--c-accent);">account_tree</span>
+              <span><strong>Diagrams & Charts:</strong> Native support for Mermaid.js flowcharts, gantt charts, and sequence diagrams.</span>
+            </li>
+            <li style="margin-bottom: 10px; display: flex; align-items: flex-start; gap: 8px;">
+              <span class="material-icons" style="font-size: 18px; color: var(--c-warn);">auto_awesome</span>
+              <span><strong>Smart Editor:</strong> Auto-saving, bracket matching, and intelligent list continuation.</span>
+            </li>
+          </ul>
+        </section>
+        <section>
+          <h2 style="font-size: 1.25rem; color: var(--c-text); margin-bottom: 16px; font-weight: 700;">Frequently Asked Questions</h2>
+          <div style="margin-bottom: 20px;">
+            <h3 style="font-size: 1rem; color: var(--c-text); margin-bottom: 6px; font-weight: 600;">Is this Markdown editor free?</h3>
+            <p>Yes, Easy Markdown is 100% free to use. It's an open-source tool designed for developers and writers who need a fast, privacy-first editing experience.</p>
+          </div>
+          <div style="margin-bottom: 20px;">
+            <h3 style="font-size: 1rem; color: var(--c-text); margin-bottom: 6px; font-weight: 600;">Does it work offline?</h3>
+            <p>Yes! Since it's built using Vanilla JavaScript and runs entirely in your browser, you can continue writing and previewing even without an internet connection once the page is loaded.</p>
+          </div>
+          <div>
+            <h3 style="font-size: 1rem; color: var(--c-text); margin-bottom: 6px; font-weight: 600;">Where is my data stored?</h3>
+            <p>Your data never leaves your browser. We use LocalStorage for auto-saving, meaning your work remains private and secure on your own device.</p>
+          </div>
+        </section>
+      </div>
+    </footer>
 
   </main>
 
