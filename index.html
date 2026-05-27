@@ -175,12 +175,47 @@
     .split-screen {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      gap: 0;
       flex: 1;
       min-height: 0;
+      position: relative;
     }
+    
+    .resizer {
+      width: 12px;
+      margin: 0 -6px;
+      z-index: 10;
+      cursor: col-resize;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+      position: relative;
+    }
+    .resizer::after {
+      content: "";
+      width: 2px;
+      height: 40px;
+      background: var(--c-outline);
+      border-radius: 2px;
+      transition: background 0.2s, height 0.2s;
+    }
+    .resizer:hover::after, .resizer.dragging::after {
+      background: var(--c-primary);
+      height: 100%;
+    }
+    .resizer.dragging {
+      background: rgba(26, 115, 232, 0.05);
+    }
+    
+    .editor-pane { margin-right: 8px; }
+    .preview-pane { margin-left: 8px; }
+
     @media (max-width: 860px) {
-      .split-screen { grid-template-columns: 1fr; }
+      .split-screen { grid-template-columns: 1fr !important; }
+      .resizer { display: none; }
+      .editor-pane { margin-right: 0; }
+      .preview-pane { margin-left: 0; }
     }
 
     /* ─── Cards ────────────────────────────────────── */
@@ -996,6 +1031,9 @@
           </div>
         </div>
 
+        <!-- RESIZER -->
+        <div class="resizer" id="pane-resizer"></div>
+
         <!-- RIGHT: Preview -->
         <div class="card preview-pane" id="preview-pane">
           <div class="card-header">
@@ -1309,6 +1347,10 @@
 
     function updatePreview() {
       const markdown = document.getElementById('md-editor').value;
+      
+      // Phase 1: Auto-save to localStorage
+      localStorage.setItem('markflow-content', markdown);
+
       const preview  = document.getElementById('editor-preview');
       if (!markdown.trim()) {
         preview.innerHTML = '';
@@ -1393,6 +1435,48 @@
       btn.style.color = _scrollSyncOn ? 'var(--c-primary)' : '';
       dot.classList.toggle('active', _scrollSyncOn);
       showSnackbar(_scrollSyncOn ? 'Scroll sync ON' : 'Scroll sync OFF', _scrollSyncOn ? 'sync' : 'sync_disabled');
+    }
+
+    /** Phase 4: Resizable Split Pane Logic */
+    function setupResizer() {
+      const resizer = document.getElementById('pane-resizer');
+      const container = resizer.parentElement;
+      
+      let isDragging = false;
+
+      // Restore saved ratio
+      const savedRatio = localStorage.getItem('markflow-split-ratio');
+      if (savedRatio && window.innerWidth > 860) {
+        container.style.gridTemplateColumns = `${savedRatio}% 0px 1fr`;
+      }
+
+      resizer.addEventListener('mousedown', e => {
+        isDragging = true;
+        resizer.classList.add('dragging');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+      });
+
+      document.addEventListener('mousemove', e => {
+        if (!isDragging) return;
+        
+        const containerRect = container.getBoundingClientRect();
+        let percentage = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+        
+        // Constraints
+        percentage = Math.max(20, Math.min(percentage, 80));
+        
+        container.style.gridTemplateColumns = `${percentage}% 0px 1fr`;
+        localStorage.setItem('markflow-split-ratio', percentage);
+      });
+
+      document.addEventListener('mouseup', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        resizer.classList.remove('dragging');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      });
     }
 
     function setupScrollSync() {
@@ -2716,7 +2800,7 @@ ${innerHtml}
       const inner = getCleanInnerHTML(source);
       if (!inner || !inner.trim()) { showSnackbar('Nothing to export — preview is empty.', 'warning'); return; }
       const html = buildStandaloneHTML(inner);
-      downloadBlob(html, 'easy-markdown-export.html', 'text/html');
+      downloadBlob(html, getExportFilename('html'), 'text/html');
       showSnackbar('HTML file downloaded!', 'check_circle');
     }
 
@@ -2739,11 +2823,12 @@ ${innerHtml}
       const inner = getCleanInnerHTML(source);
       if (!inner || !inner.trim()) { showSnackbar('Nothing to export — preview is empty.', 'warning'); return; }
 
+      const fileName = getExportFilename('pdf').replace('.pdf', '');
       const printHTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>Easy Markdown Export</title>
+  <title>${fileName}</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"/>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <style>
@@ -2966,7 +3051,7 @@ ${bodyXml}
         .then(blob => {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
-          a.href = url; a.download = 'easy-markdown-export.docx'; a.click();
+          a.href = url; a.download = getExportFilename('docx'); a.click();
           URL.revokeObjectURL(url);
           showSnackbar('Word (.docx) downloaded!', 'check_circle');
         });
@@ -3294,7 +3379,7 @@ ${bodyXml}
     /** Fallback: MSWord HTML format if JSZip fails */
     function exportWordFallback(inner) {
       const wordHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"/><style>@page{size:A4;margin:2cm}body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#202124;line-height:1.6}h1{font-size:20pt;font-weight:bold;border-bottom:2pt solid #dadce0;padding-bottom:4pt;margin-top:0}h2{font-size:15pt;font-weight:bold}h3{font-size:12pt;font-weight:bold}p{margin:0 0 8pt}code{font-family:'Courier New',monospace;background:#f6f8fa;font-size:9pt}pre{background:#f6f8fa;border:1pt solid #dadce0;padding:8pt;font-family:'Courier New',monospace;font-size:9pt}blockquote{border-left:3pt solid #1a73e8;background:#e8f0fe;padding:8pt 12pt;margin:8pt 0;font-style:italic;color:#5f6368}table{border-collapse:collapse;width:100%}th{background:#f1f3f4;font-weight:bold;padding:5pt 8pt;border:1pt solid #dadce0}td{padding:5pt 8pt;border:1pt solid #dadce0}ul,ol{margin:0 0 8pt;padding-left:18pt}li{margin-bottom:3pt}.copy-code-btn,.code-lang-badge{display:none}</style></head><body>${inner}</body></html>`;
-      downloadBlob(wordHtml, 'easy-markdown-export.doc', 'application/msword');
+      downloadBlob(wordHtml, getExportFilename('doc'), 'application/msword');
       showSnackbar('Word file downloaded (.doc format)', 'check_circle');
     }
 
@@ -3309,37 +3394,25 @@ ${bodyXml}
       URL.revokeObjectURL(url);
     }
 
+    /** Phase 2: Dynamic filename helper */
+    function getExportFilename(extension) {
+      const markdown = document.getElementById('md-editor').value;
+      const h1Match = markdown.match(/^#\s+(.+)$/m);
+      let name = 'easy-markdown-export';
+      if (h1Match && h1Match[1]) {
+        name = h1Match[1].trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+      }
+      return `${name || 'easy-markdown-export'}.${extension}`;
+    }
+
 
     // ─────────────────────────────────────────────────────
     // 10. Initialise
     // ─────────────────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', () => {
-      // Grab the empty-state node before any innerHTML wipes
-      _emptyStateEl = document.getElementById('editor-empty-state');
-
-      // Keyboard shortcut: Tab in textarea inserts 2 spaces
-      const editor = document.getElementById('md-editor');
-      editor.addEventListener('keydown', e => {
-        if (e.key === 'Tab') {
-          e.preventDefault();
-          const s = editor.selectionStart;
-          editor.value = editor.value.substring(0, s) + '  ' + editor.value.substring(editor.selectionEnd);
-          editor.selectionStart = editor.selectionEnd = s + 2;
-          updatePreview();
-        }
-      });
-
-      // Allow keyboard activation of the drop zone
-      document.getElementById('drop-zone').addEventListener('keypress', e => {
-        if (e.key === 'Enter' || e.key === ' ') document.getElementById('file-input').click();
-      });
-
-      // Prevent default drag events on the whole window (avoid browser opening files)
-      window.addEventListener('dragover', e => e.preventDefault());
-      window.addEventListener('drop',     e => e.preventDefault());
-    });
-  
-
+    
     // ── 17. Init ──────────────────────────────────
     document.addEventListener('DOMContentLoaded', () => {
       _emptyStateEl = document.getElementById('editor-empty-state');
@@ -3348,13 +3421,67 @@ ${bodyXml}
 
       // Tab key → 2 spaces
       editor.addEventListener('keydown', e => {
+        const start = editor.selectionStart;
+        const end = editor.selectionEnd;
+        const val = editor.value;
+
         if (e.key === 'Tab') {
           e.preventDefault();
-          const s = editor.selectionStart;
-          editor.value = editor.value.substring(0,s) + '  ' + editor.value.substring(editor.selectionEnd);
-          editor.selectionStart = editor.selectionEnd = s + 2;
+          editor.value = val.substring(0, start) + '  ' + val.substring(end);
+          editor.selectionStart = editor.selectionEnd = start + 2;
           updatePreview();
         }
+
+        // Phase 3: Auto-close brackets and quotes
+        const pairs = { '(': ')', '[': ']', '{': '}', '"': '"', "'": "'" };
+        if (pairs[e.key]) {
+          e.preventDefault();
+          const pair = pairs[e.key];
+          if (start !== end) {
+            // Wrap selection
+            const selected = val.substring(start, end);
+            editor.value = val.substring(0, start) + e.key + selected + pair + val.substring(end);
+            editor.selectionStart = start + 1;
+            editor.selectionEnd = end + 1;
+          } else {
+            // Insert pair
+            editor.value = val.substring(0, start) + e.key + pair + val.substring(end);
+            editor.selectionStart = editor.selectionEnd = start + 1;
+          }
+          updatePreview();
+        }
+
+        // Phase 3: List auto-continuation
+        if (e.key === 'Enter') {
+          const lineStart = val.lastIndexOf('\n', start - 1) + 1;
+          const currentLine = val.substring(lineStart, start);
+          const listMatch = currentLine.match(/^(\s*)([-*+]|\d+\.)\s+/);
+          
+          if (listMatch) {
+            const prefix = listMatch[0];
+            const content = currentLine.substring(prefix.length).trim();
+            
+            if (content.length > 0) {
+              e.preventDefault();
+              let nextPrefix = prefix;
+              // Increment numbered list
+              if (prefix.match(/\d+\.\s+/)) {
+                const num = parseInt(prefix);
+                nextPrefix = prefix.replace(/\d+/, num + 1);
+              }
+              editor.value = val.substring(0, start) + '\n' + nextPrefix + val.substring(end);
+              editor.selectionStart = editor.selectionEnd = start + 1 + nextPrefix.length;
+              updatePreview();
+            } else {
+              // Empty list item - break out of list
+              e.preventDefault();
+              editor.value = val.substring(0, lineStart) + '\n' + val.substring(end);
+              editor.selectionStart = editor.selectionEnd = lineStart + 1;
+              updatePreview();
+            }
+          }
+        }
+
         // Ctrl+B / Ctrl+I shortcuts
         if ((e.ctrlKey || e.metaKey) && e.key === 'b') { e.preventDefault(); insertSyntax('**','**'); }
         if ((e.ctrlKey || e.metaKey) && e.key === 'i') { e.preventDefault(); insertSyntax('*','*'); }
@@ -3373,6 +3500,16 @@ ${bodyXml}
 
       // Scroll sync
       setupScrollSync();
+      
+      // Phase 4: Setup resizer
+      setupResizer();
+
+      // Phase 1: Restore saved content
+      const savedContent = localStorage.getItem('markflow-content');
+      if (savedContent) {
+        editor.value = savedContent;
+        updatePreview();
+      }
 
       // Show sync dot
       document.getElementById('sync-dot').classList.add('active');
