@@ -173,7 +173,12 @@ function exportPDF(source) {
   const content = getCleanPreviewEl(source);
   if (!content || !content.innerHTML.trim()) { showSnackbar('Nothing to export.', 'warning'); return; }
   
-  // Force all SVGs to be responsive for PDF export
+  // Create a temporary container that is "visible" to html2canvas but hidden from the user
+  const tempContainer = document.createElement('div');
+  tempContainer.id = 'pdf-temp-container';
+  tempContainer.style.cssText = 'position:fixed; top:0; left:0; width:794px; z-index:-1000; opacity:0; pointer-events:none; background:white;';
+  
+  // Force SVGs to be responsive and visible
   content.querySelectorAll('svg').forEach(svg => {
     svg.setAttribute('width', '100%');
     svg.removeAttribute('height');
@@ -183,77 +188,60 @@ function exportPDF(source) {
     svg.style.display = 'block';
   });
 
-  // Create a temporary container for PDF generation
-  const tempContainer = document.createElement('div');
-  tempContainer.style.position = 'absolute';
-  tempContainer.style.left = '-9999px';
-  tempContainer.style.top = '0';
-  tempContainer.style.width = '180mm'; // Exact printable width for A4
-  
   const style = document.createElement('style');
   style.innerHTML = `
-    .pdf-content { 
-      font-family: sans-serif; 
+    .pdf-render-wrapper { 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       line-height: 1.6; 
-      color: #111; 
-      padding: 0; 
-      background: #fff; 
+      color: #000; 
+      padding: 40px; 
+      background: #fff;
       width: 100%;
     }
     .preview-content { 
       padding: 0 !important; 
       background: transparent !important; 
       min-height: 0 !important; 
-      width: 100% !important; 
-      overflow: visible !important; 
+      width: 100% !important;
     }
-    .pdf-content h1, .pdf-content h2, .pdf-content h3 { color: #1a73e8; margin-top: 1.2em; margin-bottom: 0.5em; page-break-after: avoid; }
-    .pdf-content h1 { border-bottom: 2px solid #eee; padding-bottom: 0.3em; }
-    .pdf-content pre { 
+    .pdf-render-wrapper h1, .pdf-render-wrapper h2, .pdf-render-wrapper h3 { color: #1a73e8; margin-top: 1.2em; margin-bottom: 0.5em; page-break-after: avoid; }
+    .pdf-render-wrapper h1 { border-bottom: 1.5px solid #eee; padding-bottom: 0.3em; }
+    .pdf-render-wrapper pre { 
       background: #f6f8fa; 
-      padding: 16px; 
-      border-radius: 8px; 
+      padding: 14px; 
+      border-radius: 6px; 
       border: 1px solid #ddd; 
       margin: 1em 0; 
       white-space: pre-wrap; 
       word-break: break-all;
-      font-size: 0.85em;
+      font-size: 13px;
     }
-    .pdf-content code { font-family: monospace; }
-    .pdf-content table { 
+    .pdf-render-wrapper table { 
       border-collapse: collapse; 
       width: 100% !important; 
-      margin: 1.5em 0; 
-      table-layout: fixed;
+      margin: 1.2em 0; 
       page-break-inside: avoid;
     }
-    .pdf-content th, .pdf-content td { border: 1px solid #ddd; padding: 10px; text-align: left; word-break: break-word; }
-    .pdf-content th { background-color: #f8f9fa; font-weight: bold; }
-    .pdf-content img, .pdf-content svg { 
+    .pdf-render-wrapper th, .pdf-render-wrapper td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }
+    .pdf-render-wrapper th { background-color: #f8f9fa; }
+    .pdf-render-wrapper img, .pdf-render-wrapper svg { 
       max-width: 100% !important; 
       height: auto !important; 
-      display: block !important; 
-      margin: 2em auto !important; 
+      display: block; 
+      margin: 1.5em auto; 
       page-break-inside: avoid;
     }
-    .pdf-content p { margin-bottom: 1.1em; }
-    .pdf-content blockquote { 
+    .pdf-render-wrapper p { margin-bottom: 1em; }
+    .pdf-render-wrapper blockquote { 
       border-left: 4px solid #1a73e8; 
-      padding: 10px 20px; 
+      padding: 8px 16px; 
       background: #f0f7ff; 
-      color: #444; 
-      margin: 1.5em 0; 
-      border-radius: 0 8px 8px 0;
-    }
-    /* Specific fix for Mermaid SVG containers */
-    .pdf-content svg {
-      width: 100% !important;
-      height: auto !important;
+      margin: 1em 0; 
     }
   `;
   
   const wrapper = document.createElement('div');
-  wrapper.className = 'pdf-content';
+  wrapper.className = 'pdf-render-wrapper';
   wrapper.appendChild(content);
   
   tempContainer.appendChild(style);
@@ -262,16 +250,15 @@ function exportPDF(source) {
 
   const fileName = getExportFilename('pdf');
   const opt = {
-    margin:       15,
+    margin:       10,
     filename:     fileName,
     image:        { type: 'jpeg', quality: 0.98 },
     html2canvas:  { 
       scale: 2, 
       useCORS: true, 
       letterRendering: true,
-      scrollY: 0,
-      scrollX: 0,
-      windowWidth: 800 // Consistent viewport for rendering
+      logging: false,
+      scrollY: 0
     },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
     pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
@@ -279,14 +266,19 @@ function exportPDF(source) {
 
   showSnackbar('Generating PDF...', 'sync');
   
-  html2pdf().set(opt).from(wrapper).save().then(() => {
-    showSnackbar('PDF downloaded!', 'check_circle');
-    document.body.removeChild(tempContainer);
-  }).catch(err => {
-    console.error('PDF Error:', err);
-    showSnackbar('PDF export failed.', 'error');
-    if (tempContainer.parentNode) document.body.removeChild(tempContainer);
-  });
+  // Small delay to ensure browser layout engine settles
+  setTimeout(() => {
+    html2pdf().set(opt).from(wrapper).save().then(() => {
+      showSnackbar('PDF downloaded!', 'check_circle');
+      document.body.removeChild(tempContainer);
+    }).catch(err => {
+      console.error('PDF Error:', err);
+      showSnackbar('PDF export failed.', 'error');
+      if (document.getElementById('pdf-temp-container')) {
+        document.body.removeChild(tempContainer);
+      }
+    });
+  }, 300);
 }
 
 function exportWord(source) {
