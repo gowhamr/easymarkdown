@@ -170,39 +170,65 @@ function exportHTML(source) {
 }
 
 function exportPDF(source) {
-  const element = getCleanPreviewEl(source);
-  if (!element || !element.innerHTML.trim()) { showSnackbar('Nothing to export.', 'warning'); return; }
+  const content = getCleanPreviewEl(source);
+  if (!content || !content.innerHTML.trim()) { showSnackbar('Nothing to export.', 'warning'); return; }
   
+  // Create a temporary container for PDF generation to avoid style inheritance issues
+  const tempContainer = document.createElement('div');
+  tempContainer.style.position = 'absolute';
+  tempContainer.style.left = '-9999px';
+  tempContainer.style.top = '0';
+  tempContainer.style.width = '800px'; // Fixed width for consistent PDF layout
+  
+  const style = document.createElement('style');
+  style.innerHTML = `
+    .pdf-content { font-family: sans-serif; line-height: 1.6; color: #111; padding: 0; background: #fff; }
+    .preview-content { padding: 0 !important; background: transparent !important; min-height: 0 !important; }
+    .pdf-content h1, .pdf-content h2, .pdf-content h3 { color: #1a73e8; margin-top: 1.2em; margin-bottom: 0.5em; }
+    .pdf-content h1 { border-bottom: 2px solid #eee; padding-bottom: 0.3em; }
+    .pdf-content pre { background: #f6f8fa; padding: 16px; border-radius: 8px; border: 1px solid #ddd; margin: 1em 0; overflow: hidden; }
+    .pdf-content code { font-family: monospace; font-size: 0.9em; }
+    .pdf-content table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+    .pdf-content th, .pdf-content td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    .pdf-content th { background-color: #f8f9fa; font-weight: bold; }
+    .pdf-content img { max-width: 100%; height: auto; border-radius: 4px; }
+    .pdf-content p { margin-bottom: 1em; }
+    .pdf-content blockquote { border-left: 4px solid #1a73e8; padding: 8px 16px; background: #f0f7ff; color: #444; margin: 1em 0; }
+  `;
+  
+  const wrapper = document.createElement('div');
+  wrapper.className = 'pdf-content';
+  wrapper.appendChild(content);
+  
+  tempContainer.appendChild(style);
+  tempContainer.appendChild(wrapper);
+  document.body.appendChild(tempContainer);
+
   const fileName = getExportFilename('pdf');
   const opt = {
-    margin:       [15, 15],
+    margin:       15,
     filename:     fileName,
     image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
-    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    html2canvas:  { 
+      scale: 2, 
+      useCORS: true, 
+      letterRendering: true,
+      scrollY: 0,
+      scrollX: 0
+    },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
   };
 
   showSnackbar('Generating PDF...', 'sync');
   
-  // Basic styling for the PDF content
-  const style = document.createElement('style');
-  style.innerHTML = `
-    body { font-family: sans-serif; line-height: 1.6; color: #333; }
-    h1, h2, h3 { color: #1a73e8; }
-    pre { background: #f6f8fa; padding: 12px; border-radius: 6px; }
-    code { font-family: monospace; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background-color: #f2f2f2; }
-    img { max-width: 100%; height: auto; }
-  `;
-  element.prepend(style);
-
-  html2pdf().set(opt).from(element).save().then(() => {
+  html2pdf().set(opt).from(wrapper).save().then(() => {
     showSnackbar('PDF downloaded!', 'check_circle');
+    document.body.removeChild(tempContainer);
   }).catch(err => {
     console.error('PDF Error:', err);
-    showSnackbar('PDF export failed. Try again.', 'error');
+    showSnackbar('PDF export failed.', 'error');
+    document.body.removeChild(tempContainer);
   });
 }
 
