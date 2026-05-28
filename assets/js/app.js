@@ -173,27 +173,83 @@ function exportPDF(source) {
   const content = getCleanPreviewEl(source);
   if (!content || !content.innerHTML.trim()) { showSnackbar('Nothing to export.', 'warning'); return; }
   
-  // Create a temporary container for PDF generation to avoid style inheritance issues
+  // Force all SVGs to be responsive for PDF export
+  content.querySelectorAll('svg').forEach(svg => {
+    svg.setAttribute('width', '100%');
+    svg.removeAttribute('height');
+    svg.style.width = '100%';
+    svg.style.height = 'auto';
+    svg.style.maxWidth = '100%';
+    svg.style.display = 'block';
+  });
+
+  // Create a temporary container for PDF generation
   const tempContainer = document.createElement('div');
   tempContainer.style.position = 'absolute';
   tempContainer.style.left = '-9999px';
   tempContainer.style.top = '0';
-  tempContainer.style.width = '180mm'; // Matches A4 width minus margins (210mm - 30mm)
+  tempContainer.style.width = '180mm'; // Exact printable width for A4
   
   const style = document.createElement('style');
   style.innerHTML = `
-    .pdf-content { font-family: sans-serif; line-height: 1.6; color: #111; padding: 0; background: #fff; width: 100%; }
-    .preview-content { padding: 0 !important; background: transparent !important; min-height: 0 !important; width: 100% !important; overflow: visible !important; }
-    .pdf-content h1, .pdf-content h2, .pdf-content h3 { color: #1a73e8; margin-top: 1.2em; margin-bottom: 0.5em; }
+    .pdf-content { 
+      font-family: sans-serif; 
+      line-height: 1.6; 
+      color: #111; 
+      padding: 0; 
+      background: #fff; 
+      width: 100%;
+    }
+    .preview-content { 
+      padding: 0 !important; 
+      background: transparent !important; 
+      min-height: 0 !important; 
+      width: 100% !important; 
+      overflow: visible !important; 
+    }
+    .pdf-content h1, .pdf-content h2, .pdf-content h3 { color: #1a73e8; margin-top: 1.2em; margin-bottom: 0.5em; page-break-after: avoid; }
     .pdf-content h1 { border-bottom: 2px solid #eee; padding-bottom: 0.3em; }
-    .pdf-content pre { background: #f6f8fa; padding: 16px; border-radius: 8px; border: 1px solid #ddd; margin: 1em 0; overflow: hidden; white-space: pre-wrap; word-break: break-all; }
-    .pdf-content code { font-family: monospace; font-size: 0.9em; }
-    .pdf-content table { border-collapse: collapse; width: 100%; margin: 1em 0; table-layout: fixed; }
-    .pdf-content th, .pdf-content td { border: 1px solid #ddd; padding: 10px; text-align: left; word-break: break-all; }
+    .pdf-content pre { 
+      background: #f6f8fa; 
+      padding: 16px; 
+      border-radius: 8px; 
+      border: 1px solid #ddd; 
+      margin: 1em 0; 
+      white-space: pre-wrap; 
+      word-break: break-all;
+      font-size: 0.85em;
+    }
+    .pdf-content code { font-family: monospace; }
+    .pdf-content table { 
+      border-collapse: collapse; 
+      width: 100% !important; 
+      margin: 1.5em 0; 
+      table-layout: fixed;
+      page-break-inside: avoid;
+    }
+    .pdf-content th, .pdf-content td { border: 1px solid #ddd; padding: 10px; text-align: left; word-break: break-word; }
     .pdf-content th { background-color: #f8f9fa; font-weight: bold; }
-    .pdf-content img, .pdf-content svg { max-width: 100% !important; height: auto !important; border-radius: 4px; display: block; margin: 1em auto; }
-    .pdf-content p { margin-bottom: 1em; }
-    .pdf-content blockquote { border-left: 4px solid #1a73e8; padding: 8px 16px; background: #f0f7ff; color: #444; margin: 1em 0; }
+    .pdf-content img, .pdf-content svg { 
+      max-width: 100% !important; 
+      height: auto !important; 
+      display: block !important; 
+      margin: 2em auto !important; 
+      page-break-inside: avoid;
+    }
+    .pdf-content p { margin-bottom: 1.1em; }
+    .pdf-content blockquote { 
+      border-left: 4px solid #1a73e8; 
+      padding: 10px 20px; 
+      background: #f0f7ff; 
+      color: #444; 
+      margin: 1.5em 0; 
+      border-radius: 0 8px 8px 0;
+    }
+    /* Specific fix for Mermaid SVG containers */
+    .pdf-content svg {
+      width: 100% !important;
+      height: auto !important;
+    }
   `;
   
   const wrapper = document.createElement('div');
@@ -214,7 +270,8 @@ function exportPDF(source) {
       useCORS: true, 
       letterRendering: true,
       scrollY: 0,
-      scrollX: 0
+      scrollX: 0,
+      windowWidth: 800 // Consistent viewport for rendering
     },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
     pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
@@ -228,7 +285,7 @@ function exportPDF(source) {
   }).catch(err => {
     console.error('PDF Error:', err);
     showSnackbar('PDF export failed.', 'error');
-    document.body.removeChild(tempContainer);
+    if (tempContainer.parentNode) document.body.removeChild(tempContainer);
   });
 }
 
