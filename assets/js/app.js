@@ -212,28 +212,33 @@ function exportPDF(source) {
     svg.style.display = 'block';
   });
 
-  // Construct a pure HTML string. This isolates the render from the main DOM
-  // and prevents the browser from generating blank pages due to scroll/fixed context.
-  const htmlString = `
-    <div style="font-family: -apple-system, system-ui, sans-serif; color: #111; line-height: 1.6; padding: 10px;">
+  // Create a wrapper element appended to the very top of the body
+  // This prevents the browser from using the current window scroll position as an offset
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'position: absolute; top: 0; left: 0; width: 800px; z-index: -9999; background: white; text-align: left;';
+  
+  wrapper.innerHTML = `
+    <div style="font-family: -apple-system, system-ui, sans-serif; color: #111; line-height: 1.6; padding: 20px;">
       <style>
-        h1 { font-size: 24pt; color: #1a73e8; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; }
-        h2 { font-size: 18pt; color: #1a73e8; margin-top: 25px; }
-        h3 { font-size: 14pt; color: #1a73e8; margin-top: 20px; }
-        p { margin-bottom: 12pt; font-size: 11pt; }
-        pre { background: #f6f8fa; padding: 15px; border-radius: 6px; border: 1px solid #ddd; font-size: 10pt; white-space: pre-wrap; word-break: break-all; }
-        code { font-family: monospace; background: #f3f3f3; padding: 2px 4px; border-radius: 3px; }
-        table { width: 100% !important; border-collapse: collapse; margin: 20px 0; table-layout: fixed; page-break-inside: avoid; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 10.5pt; word-break: break-word; }
-        th { background: #f8f9fa; font-weight: bold; }
-        img, svg { max-width: 100% !important; height: auto !important; display: block; margin: 25px auto; page-break-inside: avoid; }
-        blockquote { border-left: 5px solid #1a73e8; padding: 10px 20px; background: #f0f7ff; margin: 20px 0; font-style: italic; }
-        ul, ol { padding-left: 25px; margin-bottom: 12pt; }
-        li { margin-bottom: 6pt; }
+        .pdf-print-container h1 { font-size: 24pt; color: #1a73e8; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; }
+        .pdf-print-container h2 { font-size: 18pt; color: #1a73e8; margin-top: 25px; }
+        .pdf-print-container h3 { font-size: 14pt; color: #1a73e8; margin-top: 20px; }
+        .pdf-print-container p { margin-bottom: 12pt; font-size: 11pt; }
+        .pdf-print-container pre { background: #f6f8fa; padding: 15px; border-radius: 6px; border: 1px solid #ddd; font-size: 10pt; white-space: pre-wrap; word-break: break-all; }
+        .pdf-print-container code { font-family: monospace; background: #f3f3f3; padding: 2px 4px; border-radius: 3px; }
+        .pdf-print-container table { width: 100% !important; border-collapse: collapse; margin: 20px 0; table-layout: fixed; page-break-inside: avoid; }
+        .pdf-print-container th, .pdf-print-container td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 10.5pt; word-break: break-word; }
+        .pdf-print-container th { background: #f8f9fa; font-weight: bold; }
+        .pdf-print-container img, .pdf-print-container svg { max-width: 100% !important; height: auto !important; display: block; margin: 25px auto; page-break-inside: avoid; }
+        .pdf-print-container blockquote { border-left: 5px solid #1a73e8; padding: 10px 20px; background: #f0f7ff; margin: 20px 0; font-style: italic; }
+        .pdf-print-container ul, .pdf-print-container ol { padding-left: 25px; margin-bottom: 12pt; }
+        .pdf-print-container li { margin-bottom: 6pt; }
       </style>
-      ${content.innerHTML}
+      <div class="pdf-print-container">${content.innerHTML}</div>
     </div>
   `;
+
+  document.body.appendChild(wrapper);
 
   const opt = {
     margin:       12,
@@ -242,7 +247,11 @@ function exportPDF(source) {
     html2canvas:  { 
       scale: 2, 
       useCORS: true, 
-      letterRendering: true 
+      letterRendering: true,
+      // CRITICAL FIX: Forces capture to start at Y=0, ignoring window scroll
+      scrollY: 0, 
+      scrollX: 0,
+      windowWidth: 800
     },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
     pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
@@ -250,12 +259,17 @@ function exportPDF(source) {
 
   showSnackbar('Generating PDF...', 'sync');
   
-  html2pdf().set(opt).from(htmlString).save().then(() => {
-    showSnackbar('PDF downloaded!', 'check_circle');
-  }).catch(err => {
-    console.error('PDF Error:', err);
-    showSnackbar('PDF export failed. Try again.', 'error');
-  });
+  // Small timeout ensures CSS is applied and SVGs are scaled before capture
+  setTimeout(() => {
+    html2pdf().set(opt).from(wrapper).save().then(() => {
+      showSnackbar('PDF downloaded!', 'check_circle');
+      document.body.removeChild(wrapper);
+    }).catch(err => {
+      console.error('PDF Error:', err);
+      showSnackbar('PDF export failed. Try again.', 'error');
+      if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
+    });
+  }, 300);
 }
 
 function exportWord(source) {
