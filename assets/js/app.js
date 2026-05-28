@@ -148,22 +148,51 @@ function exportHTML(source) {
   const inner = getCleanInnerHTML(source);
   if (!inner || !inner.trim()) { showSnackbar('Nothing to export.', 'warning'); return; }
   
-  const copySVG = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
-  const checkSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
-
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Exported by Easy Markdown</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"/>
   <style>
-    body{font-family:sans-serif;max-width:860px;margin:40px auto;padding:0 32px 60px;line-height:1.75;}
-    pre{background:#f6f8fa;padding:16px;border-radius:8px;overflow-x:auto;position:relative;}
-    code{font-family:monospace;}
+    :root {
+      --bg: #ffffff; --text: #24292e; --link: #0366d6; --border: #eaecef;
+      --code-bg: #f6f8fa; --quote-border: #dfe2e5; --quote-text: #6a737d;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117; --text: #c9d1d9; --link: #58a6ff; --border: #21262d;
+        --code-bg: #161b22; --quote-border: #30363d; --quote-text: #8b949e;
+      }
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+      font-size: 16px; line-height: 1.5; color: var(--text); background-color: var(--bg);
+      max-width: 900px; margin: 0 auto; padding: 40px; word-wrap: break-word;
+    }
+    h1, h2, h3, h4, h5, h6 { margin-top: 24px; margin-bottom: 16px; font-weight: 600; line-height: 1.25; }
+    h1 { padding-bottom: .3em; font-size: 2em; border-bottom: 1px solid var(--border); }
+    h2 { padding-bottom: .3em; font-size: 1.5em; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 1.25em; } h4 { font-size: 1em; }
+    p, blockquote, ul, ol, dl, table, pre, details { margin-top: 0; margin-bottom: 16px; }
+    a { color: var(--link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    blockquote { padding: 0 1em; color: var(--quote-text); border-left: .25em solid var(--quote-border); }
+    ul, ol { padding-left: 2em; }
+    table { border-spacing: 0; border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+    table th, table td { padding: 6px 13px; border: 1px solid var(--border); }
+    table tr { background-color: var(--bg); border-top: 1px solid var(--border); }
+    table tr:nth-child(2n) { background-color: var(--code-bg); }
+    img, svg { max-width: 100%; box-sizing: content-box; background-color: var(--bg); display: block; margin: 0 auto; }
+    code { font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace; font-size: 85%; background-color: rgba(175, 184, 193, 0.2); padding: .2em .4em; border-radius: 6px; }
+    pre { font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace; font-size: 85%; line-height: 1.45; background-color: var(--code-bg); border-radius: 6px; padding: 16px; overflow: auto; }
+    pre code { background-color: transparent; padding: 0; border-radius: 0; }
   </style>
 </head>
-<body>${inner}</body></html>`;
+<body>
+  ${inner}
+</body>
+</html>`;
 
   downloadBlob(html, getExportFilename('html'), 'text/html');
   showSnackbar('HTML file downloaded!', 'check_circle');
@@ -173,96 +202,104 @@ function exportPDF(source) {
   const content = getCleanPreviewEl(source);
   if (!content || !content.innerHTML.trim()) { showSnackbar('Nothing to export.', 'warning'); return; }
   
-  // 1. Create a visible overlay to ensure perfect rendering
-  const overlay = document.createElement('div');
-  overlay.id = 'pdf-export-overlay';
-  overlay.style.cssText = `
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: #fff; z-index: 100000; overflow-y: auto;
-    display: flex; flex-direction: column; align-items: center;
-    padding: 20px; box-sizing: border-box;
-  `;
-  
-  // Loading indicator
-  const loader = document.createElement('div');
-  loader.style.cssText = 'position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; font-family:sans-serif; color:#1a73e8; z-index:100001;';
-  loader.innerHTML = '<div class="spinner" style="width:40px; height:40px; border-width:4px; margin:0 auto 15px;"></div><div style="font-weight:600;">Preparing PDF...</div><div style="font-size:12px; margin-top:5px; opacity:0.7;">This may take a few seconds</div>';
-  document.body.appendChild(loader);
-
-  // 2. Prepare the render wrapper (A4 width)
-  const renderWrapper = document.createElement('div');
-  renderWrapper.className = 'pdf-render-wrapper';
-  renderWrapper.style.cssText = 'width: 210mm; background: #fff; padding: 20mm; box-sizing: border-box; min-height: 297mm; position: relative;';
-  
-  // Scale SVGs inside the content
+  // Prepare SVGs for strict bounding within the PDF
   content.querySelectorAll('svg').forEach(svg => {
-    svg.style.maxWidth = '100%';
-    svg.style.height = 'auto';
     svg.setAttribute('width', '100%');
     svg.removeAttribute('height');
+    svg.style.width = '100%';
+    svg.style.height = 'auto';
+    svg.style.maxWidth = '100%';
+    svg.style.display = 'block';
   });
 
-  const style = document.createElement('style');
-  style.innerHTML = `
-    .pdf-render-wrapper { font-family: -apple-system, system-ui, sans-serif; color: #111; line-height: 1.6; }
-    .pdf-render-wrapper h1 { font-size: 24pt; color: #1a73e8; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; }
-    .pdf-render-wrapper h2 { font-size: 18pt; color: #1a73e8; margin-top: 25px; }
-    .pdf-render-wrapper p { margin-bottom: 12pt; font-size: 11pt; }
-    .pdf-render-wrapper pre { background: #f6f8fa; padding: 15px; border-radius: 6px; border: 1px solid #ddd; font-size: 10pt; white-space: pre-wrap; word-break: break-all; }
-    .pdf-render-wrapper code { font-family: monospace; background: #f3f3f3; padding: 2px 4px; border-radius: 3px; }
-    .pdf-render-wrapper table { width: 100% !important; border-collapse: collapse; margin: 20px 0; table-layout: fixed; }
-    .pdf-render-wrapper th, .pdf-render-wrapper td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 10.5pt; word-break: break-word; }
-    .pdf-render-wrapper th { background: #f8f9fa; font-weight: bold; }
-    .pdf-render-wrapper img, .pdf-render-wrapper svg { max-width: 100% !important; height: auto !important; display: block; margin: 25px auto; page-break-inside: avoid; }
-    .pdf-render-wrapper blockquote { border-left: 5px solid #1a73e8; padding: 10px 20px; background: #f0f7ff; margin: 20px 0; font-style: italic; }
-    .preview-content { padding: 0 !important; background: transparent !important; }
+  // Construct a pure HTML string. This isolates the render from the main DOM
+  // and prevents the browser from generating blank pages due to scroll/fixed context.
+  const htmlString = `
+    <div style="font-family: -apple-system, system-ui, sans-serif; color: #111; line-height: 1.6; padding: 10px;">
+      <style>
+        h1 { font-size: 24pt; color: #1a73e8; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; }
+        h2 { font-size: 18pt; color: #1a73e8; margin-top: 25px; }
+        h3 { font-size: 14pt; color: #1a73e8; margin-top: 20px; }
+        p { margin-bottom: 12pt; font-size: 11pt; }
+        pre { background: #f6f8fa; padding: 15px; border-radius: 6px; border: 1px solid #ddd; font-size: 10pt; white-space: pre-wrap; word-break: break-all; }
+        code { font-family: monospace; background: #f3f3f3; padding: 2px 4px; border-radius: 3px; }
+        table { width: 100% !important; border-collapse: collapse; margin: 20px 0; table-layout: fixed; page-break-inside: avoid; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 10.5pt; word-break: break-word; }
+        th { background: #f8f9fa; font-weight: bold; }
+        img, svg { max-width: 100% !important; height: auto !important; display: block; margin: 25px auto; page-break-inside: avoid; }
+        blockquote { border-left: 5px solid #1a73e8; padding: 10px 20px; background: #f0f7ff; margin: 20px 0; font-style: italic; }
+        ul, ol { padding-left: 25px; margin-bottom: 12pt; }
+        li { margin-bottom: 6pt; }
+      </style>
+      ${content.innerHTML}
+    </div>
   `;
-  
-  renderWrapper.appendChild(content);
-  overlay.appendChild(style);
-  overlay.appendChild(renderWrapper);
-  document.body.appendChild(overlay);
 
   const opt = {
-    margin: 0,
-    filename: getExportFilename('pdf'),
-    image: { type: 'jpeg', quality: 0.95 },
-    html2canvas: { 
+    margin:       12,
+    filename:     getExportFilename('pdf'),
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { 
       scale: 2, 
       useCORS: true, 
-      letterRendering: true,
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: 1200 // Larger window width for better diagram layout
+      letterRendering: true 
     },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
   };
 
-  // 3. Give the browser time to render everything perfectly
-  setTimeout(() => {
-    html2pdf().set(opt).from(renderWrapper).save().then(() => {
-      showSnackbar('PDF Export Success!', 'check_circle');
-      cleanup();
-    }).catch(err => {
-      console.error('PDF Export Error:', err);
-      showSnackbar('Export failed. Please try again.', 'error');
-      cleanup();
-    });
-  }, 800);
-
-  function cleanup() {
-    if (document.getElementById('pdf-export-overlay')) document.body.removeChild(overlay);
-    if (loader.parentNode) document.body.removeChild(loader);
-  }
+  showSnackbar('Generating PDF...', 'sync');
+  
+  html2pdf().set(opt).from(htmlString).save().then(() => {
+    showSnackbar('PDF downloaded!', 'check_circle');
+  }).catch(err => {
+    console.error('PDF Error:', err);
+    showSnackbar('PDF export failed. Try again.', 'error');
+  });
 }
 
 function exportWord(source) {
   const inner = getCleanInnerHTML(source);
   if (!inner || !inner.trim()) { showSnackbar('Nothing to export.', 'warning'); return; }
-  const wordHtml = `<html><body>${inner}</body></html>`;
+  
+  // Create an XML-based MS Word document wrapper
+  const wordHtml = `
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+  <meta charset="utf-8">
+  <title>Exported Document</title>
+  <!--[if gte mso 9]>
+  <xml>
+    <w:WordDocument>
+      <w:View>Print</w:View>
+      <w:Zoom>100</w:Zoom>
+      <w:DoNotOptimizeForBrowser/>
+    </w:WordDocument>
+  </xml>
+  <![endif]-->
+  <style>
+    body { font-family: 'Calibri', 'Arial', sans-serif; font-size: 11pt; line-height: 1.5; }
+    h1 { font-size: 24pt; font-weight: bold; color: #2F5496; margin-bottom: 12pt; }
+    h2 { font-size: 18pt; font-weight: bold; color: #2F5496; margin-bottom: 10pt; }
+    h3 { font-size: 14pt; font-weight: bold; color: #1F3763; margin-bottom: 8pt; }
+    p { margin-bottom: 10pt; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 15pt; }
+    th, td { border: 1pt solid #8EA9DB; padding: 5pt; text-align: left; }
+    th { background-color: #D9E1F2; font-weight: bold; }
+    code { font-family: 'Consolas', 'Courier New', monospace; font-size: 10pt; background: #F2F2F2; }
+    pre { background: #F2F2F2; padding: 10pt; font-family: 'Consolas', monospace; }
+    blockquote { border-left: 3pt solid #D9D9D9; padding-left: 10pt; color: #595959; font-style: italic; }
+  </style>
+</head>
+<body>
+  ${inner}
+</body>
+</html>`;
+
   downloadBlob(wordHtml, getExportFilename('doc'), 'application/msword');
-  showSnackbar('Word file downloaded!', 'check_circle');
+  showSnackbar('Word document downloaded!', 'check_circle');
 }
 
 // ── 5. Feedback ───────────────────────────────
