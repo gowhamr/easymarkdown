@@ -49,6 +49,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" id="hljs-dark" disabled/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 
@@ -329,7 +330,7 @@
     </div>
 
     <!-- SEO Information Section -->
-    <section class="seo-info-footer" style="padding: 40px 20px; border-top: 1px solid var(--c-outline); margin-top: 40px;">
+    <section id="features" class="seo-info-footer" style="padding: 40px 20px; border-top: 1px solid var(--c-outline); margin-top: 40px;">
       <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px;">
         <div>
           <h2 style="font-size: 1.25rem; margin-bottom: 16px;">Powerful Markdown Features</h2>
@@ -356,6 +357,50 @@
     </section>
 
   </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <div class="app-bar__logo">
+          <div class="app-bar__icon"><span class="material-icons">article</span></div>
+          <span class="app-bar__title">Easy <span>Markdown</span></span>
+        </div>
+        <p class="footer-tagline">The ultimate privacy-first Markdown editor for writers and developers. No servers, no tracking, just your content.</p>
+        <div class="footer-social">
+          <a href="https://github.com/gowhamr/markflow" target="_blank" aria-label="GitHub"><span class="material-icons">code</span></a>
+        </div>
+      </div>
+      
+      <div class="footer-nav">
+        <div class="footer-group">
+          <h4 class="footer-group__title">Product</h4>
+          <a href="javascript:void(0)" onclick="switchMode('editor')" class="footer-link">Live Editor</a>
+          <a href="javascript:void(0)" onclick="switchMode('upload')" class="footer-link">Upload File</a>
+          <a href="#features" class="footer-link">Features</a>
+        </div>
+        <div class="footer-group">
+          <h4 class="footer-group__title">Resources</h4>
+          <a href="https://www.markdownguide.org/" target="_blank" class="footer-link">Markdown Guide</a>
+          <a href="https://mermaid.js.org/" target="_blank" class="footer-link">Mermaid Diagrams</a>
+          <a href="javascript:void(0)" onclick="loadSample()" class="footer-link">Sample Template</a>
+        </div>
+        <div class="footer-group">
+          <h4 class="footer-group__title">Company</h4>
+          <a href="https://github.com/gowhamr/markflow" target="_blank" class="footer-link">About Us</a>
+          <a href="javascript:void(0)" class="footer-link">Privacy Policy</a>
+          <a href="javascript:void(0)" class="footer-link">Terms of Use</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <div class="footer-copy">&copy; 2026 MarkFlow. All rights reserved. Built with ❤️ for the community.</div>
+      <div class="footer-status">
+        <span class="status-dot"></span> System Operational
+      </div>
+    </div>
+  </footer>
 
   <!-- Mobile floating export bar -->
   <div class="mobile-export-bar" id="mobile-export-bar">

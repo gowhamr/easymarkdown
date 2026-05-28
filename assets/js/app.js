@@ -169,13 +169,40 @@ function exportHTML(source) {
 }
 
 function exportPDF(source) {
-  const inner = getCleanInnerHTML(source);
-  if (!inner || !inner.trim()) { showSnackbar('Nothing to export.', 'warning'); return; }
-  const fileName = getExportFilename('pdf').replace('.pdf', '');
-  const printHTML = `<html><head><title>${fileName}</title><style>body{font-family:sans-serif;padding:40px;}</style></head><body>${inner}<script>window.onload=function(){window.print();}<\/script></body></html>`;
-  const printWin = window.open('', '_blank');
-  printWin.document.write(printHTML);
-  printWin.document.close();
+  const element = getCleanPreviewEl(source);
+  if (!element || !element.innerHTML.trim()) { showSnackbar('Nothing to export.', 'warning'); return; }
+  
+  const fileName = getExportFilename('pdf');
+  const opt = {
+    margin:       [15, 15],
+    filename:     fileName,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  showSnackbar('Generating PDF...', 'sync');
+  
+  // Basic styling for the PDF content
+  const style = document.createElement('style');
+  style.innerHTML = `
+    body { font-family: sans-serif; line-height: 1.6; color: #333; }
+    h1, h2, h3 { color: #1a73e8; }
+    pre { background: #f6f8fa; padding: 12px; border-radius: 6px; }
+    code { font-family: monospace; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    img { max-width: 100%; height: auto; }
+  `;
+  element.prepend(style);
+
+  html2pdf().set(opt).from(element).save().then(() => {
+    showSnackbar('PDF downloaded!', 'check_circle');
+  }).catch(err => {
+    console.error('PDF Error:', err);
+    showSnackbar('PDF export failed. Try again.', 'error');
+  });
 }
 
 function exportWord(source) {
