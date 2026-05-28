@@ -173,112 +173,88 @@ function exportPDF(source) {
   const content = getCleanPreviewEl(source);
   if (!content || !content.innerHTML.trim()) { showSnackbar('Nothing to export.', 'warning'); return; }
   
-  // Create a temporary container that is "visible" to html2canvas but hidden from the user
-  const tempContainer = document.createElement('div');
-  tempContainer.id = 'pdf-temp-container';
-  tempContainer.style.cssText = 'position:fixed; top:0; left:0; width:794px; z-index:-1000; opacity:0; pointer-events:none; background:white;';
+  // 1. Create a visible overlay to ensure perfect rendering
+  const overlay = document.createElement('div');
+  overlay.id = 'pdf-export-overlay';
+  overlay.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: #fff; z-index: 100000; overflow-y: auto;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 20px; box-sizing: border-box;
+  `;
   
-  // Force SVGs to be responsive and visible
+  // Loading indicator
+  const loader = document.createElement('div');
+  loader.style.cssText = 'position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; font-family:sans-serif; color:#1a73e8; z-index:100001;';
+  loader.innerHTML = '<div class="spinner" style="width:40px; height:40px; border-width:4px; margin:0 auto 15px;"></div><div style="font-weight:600;">Preparing PDF...</div><div style="font-size:12px; margin-top:5px; opacity:0.7;">This may take a few seconds</div>';
+  document.body.appendChild(loader);
+
+  // 2. Prepare the render wrapper (A4 width)
+  const renderWrapper = document.createElement('div');
+  renderWrapper.className = 'pdf-render-wrapper';
+  renderWrapper.style.cssText = 'width: 210mm; background: #fff; padding: 20mm; box-sizing: border-box; min-height: 297mm; position: relative;';
+  
+  // Scale SVGs inside the content
   content.querySelectorAll('svg').forEach(svg => {
+    svg.style.maxWidth = '100%';
+    svg.style.height = 'auto';
     svg.setAttribute('width', '100%');
     svg.removeAttribute('height');
-    svg.style.width = '100%';
-    svg.style.height = 'auto';
-    svg.style.maxWidth = '100%';
-    svg.style.display = 'block';
   });
 
   const style = document.createElement('style');
   style.innerHTML = `
-    .pdf-render-wrapper { 
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      line-height: 1.6; 
-      color: #000; 
-      padding: 40px; 
-      background: #fff;
-      width: 100%;
-    }
-    .preview-content { 
-      padding: 0 !important; 
-      background: transparent !important; 
-      min-height: 0 !important; 
-      width: 100% !important;
-    }
-    .pdf-render-wrapper h1, .pdf-render-wrapper h2, .pdf-render-wrapper h3 { color: #1a73e8; margin-top: 1.2em; margin-bottom: 0.5em; page-break-after: avoid; }
-    .pdf-render-wrapper h1 { border-bottom: 1.5px solid #eee; padding-bottom: 0.3em; }
-    .pdf-render-wrapper pre { 
-      background: #f6f8fa; 
-      padding: 14px; 
-      border-radius: 6px; 
-      border: 1px solid #ddd; 
-      margin: 1em 0; 
-      white-space: pre-wrap; 
-      word-break: break-all;
-      font-size: 13px;
-    }
-    .pdf-render-wrapper table { 
-      border-collapse: collapse; 
-      width: 100% !important; 
-      margin: 1.2em 0; 
-      page-break-inside: avoid;
-    }
-    .pdf-render-wrapper th, .pdf-render-wrapper td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }
-    .pdf-render-wrapper th { background-color: #f8f9fa; }
-    .pdf-render-wrapper img, .pdf-render-wrapper svg { 
-      max-width: 100% !important; 
-      height: auto !important; 
-      display: block; 
-      margin: 1.5em auto; 
-      page-break-inside: avoid;
-    }
-    .pdf-render-wrapper p { margin-bottom: 1em; }
-    .pdf-render-wrapper blockquote { 
-      border-left: 4px solid #1a73e8; 
-      padding: 8px 16px; 
-      background: #f0f7ff; 
-      margin: 1em 0; 
-    }
+    .pdf-render-wrapper { font-family: -apple-system, system-ui, sans-serif; color: #111; line-height: 1.6; }
+    .pdf-render-wrapper h1 { font-size: 24pt; color: #1a73e8; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; }
+    .pdf-render-wrapper h2 { font-size: 18pt; color: #1a73e8; margin-top: 25px; }
+    .pdf-render-wrapper p { margin-bottom: 12pt; font-size: 11pt; }
+    .pdf-render-wrapper pre { background: #f6f8fa; padding: 15px; border-radius: 6px; border: 1px solid #ddd; font-size: 10pt; white-space: pre-wrap; word-break: break-all; }
+    .pdf-render-wrapper code { font-family: monospace; background: #f3f3f3; padding: 2px 4px; border-radius: 3px; }
+    .pdf-render-wrapper table { width: 100% !important; border-collapse: collapse; margin: 20px 0; table-layout: fixed; }
+    .pdf-render-wrapper th, .pdf-render-wrapper td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 10.5pt; word-break: break-word; }
+    .pdf-render-wrapper th { background: #f8f9fa; font-weight: bold; }
+    .pdf-render-wrapper img, .pdf-render-wrapper svg { max-width: 100% !important; height: auto !important; display: block; margin: 25px auto; page-break-inside: avoid; }
+    .pdf-render-wrapper blockquote { border-left: 5px solid #1a73e8; padding: 10px 20px; background: #f0f7ff; margin: 20px 0; font-style: italic; }
+    .preview-content { padding: 0 !important; background: transparent !important; }
   `;
   
-  const wrapper = document.createElement('div');
-  wrapper.className = 'pdf-render-wrapper';
-  wrapper.appendChild(content);
-  
-  tempContainer.appendChild(style);
-  tempContainer.appendChild(wrapper);
-  document.body.appendChild(tempContainer);
+  renderWrapper.appendChild(content);
+  overlay.appendChild(style);
+  overlay.appendChild(renderWrapper);
+  document.body.appendChild(overlay);
 
-  const fileName = getExportFilename('pdf');
   const opt = {
-    margin:       10,
-    filename:     fileName,
-    image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { 
+    margin: 0,
+    filename: getExportFilename('pdf'),
+    image: { type: 'jpeg', quality: 0.95 },
+    html2canvas: { 
       scale: 2, 
       useCORS: true, 
       letterRendering: true,
-      logging: false,
-      scrollY: 0
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: 1200 // Larger window width for better diagram layout
     },
-    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
   };
 
-  showSnackbar('Generating PDF...', 'sync');
-  
-  // Small delay to ensure browser layout engine settles
+  // 3. Give the browser time to render everything perfectly
   setTimeout(() => {
-    html2pdf().set(opt).from(wrapper).save().then(() => {
-      showSnackbar('PDF downloaded!', 'check_circle');
-      document.body.removeChild(tempContainer);
+    html2pdf().set(opt).from(renderWrapper).save().then(() => {
+      showSnackbar('PDF Export Success!', 'check_circle');
+      cleanup();
     }).catch(err => {
-      console.error('PDF Error:', err);
-      showSnackbar('PDF export failed.', 'error');
-      if (document.getElementById('pdf-temp-container')) {
-        document.body.removeChild(tempContainer);
-      }
+      console.error('PDF Export Error:', err);
+      showSnackbar('Export failed. Please try again.', 'error');
+      cleanup();
     });
-  }, 300);
+  }, 800);
+
+  function cleanup() {
+    if (document.getElementById('pdf-export-overlay')) document.body.removeChild(overlay);
+    if (loader.parentNode) document.body.removeChild(loader);
+  }
 }
 
 function exportWord(source) {
