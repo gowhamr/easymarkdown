@@ -178,20 +178,20 @@ function exportPDF(source) {
   tempContainer.style.position = 'absolute';
   tempContainer.style.left = '-9999px';
   tempContainer.style.top = '0';
-  tempContainer.style.width = '800px'; // Fixed width for consistent PDF layout
+  tempContainer.style.width = '180mm'; // Matches A4 width minus margins (210mm - 30mm)
   
   const style = document.createElement('style');
   style.innerHTML = `
-    .pdf-content { font-family: sans-serif; line-height: 1.6; color: #111; padding: 0; background: #fff; }
-    .preview-content { padding: 0 !important; background: transparent !important; min-height: 0 !important; }
+    .pdf-content { font-family: sans-serif; line-height: 1.6; color: #111; padding: 0; background: #fff; width: 100%; }
+    .preview-content { padding: 0 !important; background: transparent !important; min-height: 0 !important; width: 100% !important; overflow: visible !important; }
     .pdf-content h1, .pdf-content h2, .pdf-content h3 { color: #1a73e8; margin-top: 1.2em; margin-bottom: 0.5em; }
     .pdf-content h1 { border-bottom: 2px solid #eee; padding-bottom: 0.3em; }
-    .pdf-content pre { background: #f6f8fa; padding: 16px; border-radius: 8px; border: 1px solid #ddd; margin: 1em 0; overflow: hidden; }
+    .pdf-content pre { background: #f6f8fa; padding: 16px; border-radius: 8px; border: 1px solid #ddd; margin: 1em 0; overflow: hidden; white-space: pre-wrap; word-break: break-all; }
     .pdf-content code { font-family: monospace; font-size: 0.9em; }
-    .pdf-content table { border-collapse: collapse; width: 100%; margin: 1em 0; }
-    .pdf-content th, .pdf-content td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    .pdf-content table { border-collapse: collapse; width: 100%; margin: 1em 0; table-layout: fixed; }
+    .pdf-content th, .pdf-content td { border: 1px solid #ddd; padding: 10px; text-align: left; word-break: break-all; }
     .pdf-content th { background-color: #f8f9fa; font-weight: bold; }
-    .pdf-content img { max-width: 100%; height: auto; border-radius: 4px; }
+    .pdf-content img, .pdf-content svg { max-width: 100% !important; height: auto !important; border-radius: 4px; display: block; margin: 1em auto; }
     .pdf-content p { margin-bottom: 1em; }
     .pdf-content blockquote { border-left: 4px solid #1a73e8; padding: 8px 16px; background: #f0f7ff; color: #444; margin: 1em 0; }
   `;
