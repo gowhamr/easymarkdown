@@ -812,9 +812,15 @@
     /* ─── Focus ring ───────────────────────────────── */
     *:focus { outline: none; }
     *:focus-visible {
-      outline: 2px solid var(--c-primary);
-      outline-offset: 3px;
-      box-shadow: 0 0 0 4px color-mix(in srgb, var(--c-primary) 20%, transparent);
+      outline: 3px solid var(--c-primary);
+      outline-offset: 4px;
+      box-shadow: 0 0 0 6px color-mix(in srgb, var(--c-primary) 30%, transparent);
+    }
+    
+    /* Specific focus for cards/panes */
+    .card:focus-within {
+      border-color: var(--c-primary);
+      box-shadow: var(--shadow-md);
     }
 
     /* ─── Reduced Motion ───────────────────────────── */
@@ -827,6 +833,8 @@
       }
       .app-bar__logo:hover .app-bar__icon { transform: none !important; }
       .icon-btn:active, .btn-filled:active, .btn-tonal:active, .tb-btn:active { transform: none !important; }
+      .social-icon-btn:hover { transform: none !important; }
+      .status-dot-minimal { animation: none !important; }
     }
 
     /* ─── Responsive tweaks ────────────────────────── */

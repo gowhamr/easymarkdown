@@ -125,7 +125,8 @@ function injectCopyButtons(container) {
     }
     const btn = document.createElement('button');
     btn.className = 'copy-code-btn'; btn.title = 'Copy code';
-    btn.innerHTML = '<span class="material-icons">content_copy</span>';
+    btn.innerHTML = '<span class="material-icons" aria-hidden="true">content_copy</span>';
+    btn.setAttribute('aria-label', 'Copy code block');
     btn.addEventListener('click', function(e) {
       e.stopPropagation();
       const code = pre.querySelector('code');

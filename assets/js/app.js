@@ -7,6 +7,7 @@
 function applyTheme(dark) {
   document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
   document.getElementById('theme-icon').textContent = dark ? 'light_mode' : 'dark_mode';
+  document.getElementById('theme-btn').setAttribute('aria-pressed', dark);
   document.getElementById('hljs-light').disabled = dark;
   document.getElementById('hljs-dark').disabled  = !dark;
   localStorage.setItem('em-theme', dark ? 'dark' : 'light');

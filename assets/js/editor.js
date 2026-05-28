@@ -178,8 +178,10 @@ function updateStats(md) {
   document.getElementById('stat-read').textContent  = `${readMin} min`;
   const pct = Math.min(100, Math.round(words / _wordGoal * 100));
   const fill = document.getElementById('stat-goal-fill');
+  const bar = document.getElementById('goal-progress-bar');
   fill.style.width = pct + '%';
   fill.classList.toggle('done', pct >= 100);
+  if (bar) bar.setAttribute('aria-valuenow', pct);
 }
 
 function insertSyntax(prefix, suffix) {
@@ -234,6 +236,7 @@ function toggleTablePicker(e) {
   _pickerOpen = !_pickerOpen;
   const popup = document.getElementById('table-picker-popup');
   const btn   = document.getElementById('table-picker-btn');
+  btn.setAttribute('aria-expanded', _pickerOpen);
   if (_pickerOpen) {
     initTablePickerGrid();
     document.querySelectorAll('.table-picker-cell').forEach(c => c.classList.remove('hovered'));
@@ -251,6 +254,7 @@ function toggleTablePicker(e) {
 function closeTablePicker() {
   _pickerOpen = false;
   document.getElementById('table-picker-popup').classList.remove('open');
+  document.getElementById('table-picker-btn').setAttribute('aria-expanded', 'false');
 }
 
 function insertTableGrid(rows, cols) {
@@ -355,6 +359,7 @@ function toggleScrollSync() {
   const btn = document.getElementById('sync-toggle-btn');
   const dot = document.getElementById('sync-dot');
   btn.style.color = _scrollSyncOn ? 'var(--c-primary)' : '';
+  btn.setAttribute('aria-pressed', _scrollSyncOn);
   dot.classList.toggle('active', _scrollSyncOn);
   showSnackbar(_scrollSyncOn ? 'Scroll sync ON' : 'Scroll sync OFF', _scrollSyncOn ? 'sync' : 'sync_disabled');
 }
@@ -363,7 +368,9 @@ function toggleScrollSync() {
 let _findMatches = [], _findIndex = 0;
 function toggleFindBar() {
   const bar = document.getElementById('find-bar');
+  const btn = document.getElementById('find-toggle-btn');
   const hidden = bar.classList.toggle('hidden');
+  btn.setAttribute('aria-pressed', !hidden);
   if (!hidden) {
     document.getElementById('find-input').focus();
   } else {

@@ -83,7 +83,7 @@
     <div class="app-bar__spacer"></div>
     <div class="app-bar__actions">
       <!-- Find/Replace toggle -->
-      <button class="icon-btn" id="find-toggle-btn" onclick="toggleFindBar()" title="Find & Replace (Ctrl+F)" aria-label="Find and replace">
+      <button class="icon-btn" id="find-toggle-btn" onclick="toggleFindBar()" title="Find & Replace (Ctrl+F)" aria-label="Find and replace" aria-pressed="false">
         <span class="material-icons">search</span>
       </button>
       <!-- Scroll sync toggle -->
@@ -91,42 +91,42 @@
         <span class="material-icons">sync</span>
       </button>
       <!-- Dark/Light mode toggle -->
-      <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle dark/light mode" aria-label="Toggle theme">
+      <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle dark/light mode" aria-label="Toggle theme" aria-pressed="false">
         <span class="material-icons" id="theme-icon">dark_mode</span>
       </button>
     </div>
   </header>
 
   <!-- ===== MODE TABS ===== -->
-  <nav class="tab-bar" role="tablist">
-    <button class="tab-btn active" id="tab-editor" role="tab" aria-selected="true" onclick="switchMode('editor')">
+  <nav class="tab-bar" role="tablist" aria-label="Editor modes">
+    <button class="tab-btn active" id="tab-editor" role="tab" aria-selected="true" aria-controls="panel-editor" onclick="switchMode('editor')">
       <span class="material-icons">edit_note</span> Live Editor
     </button>
-    <button class="tab-btn" id="tab-upload" role="tab" aria-selected="false" onclick="switchMode('upload')">
+    <button class="tab-btn" id="tab-upload" role="tab" aria-selected="false" aria-controls="panel-upload" onclick="switchMode('upload')">
       <span class="material-icons">upload_file</span> File Upload
     </button>
     <!-- Mobile view toggle (shown only on small screens) -->
     <div class="mobile-view-toggle" id="mobile-view-toggle" role="tablist" aria-label="Switch mobile view">
-      <button class="mvt-btn active" id="mvt-edit" role="tab" aria-selected="true" onclick="setMobileView('editor')">Edit</button>
-      <button class="mvt-btn" id="mvt-preview" role="tab" aria-selected="false" onclick="setMobileView('preview')">Preview</button>
+      <button class="mvt-btn active" id="mvt-edit" role="tab" aria-selected="true" aria-controls="editor-pane" onclick="setMobileView('editor')">Edit</button>
+      <button class="mvt-btn" id="mvt-preview" role="tab" aria-selected="false" aria-controls="preview-pane" onclick="setMobileView('preview')">Preview</button>
     </div>
   </nav>
 
   <!-- ===== MAIN ===== -->
-  <main class="main" id="main-content" role="main">
+  <main class="main" id="main-content">
 
     <!-- SEO Header for Crawlers -->
-    <section class="seo-content" style="display:none">
+    <section class="seo-content" style="display:none" aria-hidden="true">
       <h1>Easy Markdown Editor Online</h1>
       <p>Write, preview, and export Markdown instantly in your browser. Supports Mermaid diagrams, syntax highlighting, and PDF/HTML/Word export.</p>
     </section>
 
     <!-- ==================== LIVE EDITOR ==================== -->
-    <div class="mode-panel active" id="panel-editor">
+    <div class="mode-panel active" id="panel-editor" role="tabpanel" aria-labelledby="tab-editor">
       <div class="split-screen">
 
         <!-- LEFT: Editor -->
-        <div class="card editor-pane" id="editor-pane">
+        <div class="card editor-pane" id="editor-pane" role="region" aria-label="Markdown input">
           <div class="card-header">
             <span class="card-header__title">
               <span class="material-icons">edit</span> Markdown Input
@@ -135,14 +135,14 @@
           </div>
 
           <!-- Find/Replace bar (hidden by default) -->
-          <div class="find-bar hidden" id="find-bar">
-            <span class="material-icons" style="font-size:16px;color:var(--c-text-2);">search</span>
+          <div class="find-bar hidden" id="find-bar" role="search" aria-label="Find and replace in editor">
+            <span class="material-icons" style="font-size:16px;color:var(--c-text-2);" aria-hidden="true">search</span>
             <input class="find-input" id="find-input" placeholder="Find…" oninput="runFind()" onkeydown="findKeyNav(event)" aria-label="Find text"/>
             <span class="find-count" id="find-count" aria-live="polite"></span>
-            <span class="find-bar__sep">→</span>
+            <span class="find-bar__sep" aria-hidden="true">→</span>
             <input class="find-input" id="replace-input" placeholder="Replace…" style="max-width:120px;" aria-label="Replace with"/>
-            <button class="tb-btn" onclick="doReplace(false)" title="Replace one"><span class="material-icons" style="font-size:14px">find_replace</span></button>
-            <button class="tb-btn" onclick="doReplace(true)" title="Replace all" style="font-size:.72rem">All</button>
+            <button class="tb-btn" onclick="doReplace(false)" title="Replace one" aria-label="Replace next match"><span class="material-icons" style="font-size:14px">find_replace</span></button>
+            <button class="tb-btn" onclick="doReplace(true)" title="Replace all" style="font-size:.72rem" aria-label="Replace all matches">All</button>
             <button class="tb-btn" onclick="toggleFindBar()" title="Close" aria-label="Close find bar">
               <span class="material-icons" style="font-size:14px">close</span>
             </button>
@@ -155,64 +155,64 @@
           <div class="editor-toolbar" role="toolbar" aria-label="Text formatting">
             <span class="tb-row-label">Format</span>
             <div class="toolbar-sep"></div>
-            <button class="tb-btn" onclick="insertSyntax('**','**')" title="Bold (Ctrl+B)" aria-label="Bold"><span class="material-icons">format_bold</span></button>
-            <button class="tb-btn" onclick="insertSyntax('*','*')" title="Italic (Ctrl+I)" aria-label="Italic"><span class="material-icons">format_italic</span></button>
-            <button class="tb-btn" onclick="insertSyntax('~~','~~')" title="Strikethrough" aria-label="Strikethrough"><span class="material-icons">strikethrough_s</span></button>
-            <button class="tb-btn" onclick="insertSyntax('`','`')" title="Inline Code" aria-label="Inline Code"><span class="material-icons">code</span></button>
-            <button class="tb-btn" onclick="insertSyntax('\n```\n','\n```')" title="Code Block" aria-label="Code Block"><span class="material-icons">integration_instructions</span></button>
+            <button class="tb-btn" onclick="insertSyntax('**','**')" title="Bold (Ctrl+B)" aria-label="Bold"><span class="material-icons" aria-hidden="true">format_bold</span></button>
+            <button class="tb-btn" onclick="insertSyntax('*','*')" title="Italic (Ctrl+I)" aria-label="Italic"><span class="material-icons" aria-hidden="true">format_italic</span></button>
+            <button class="tb-btn" onclick="insertSyntax('~~','~~')" title="Strikethrough" aria-label="Strikethrough"><span class="material-icons" aria-hidden="true">strikethrough_s</span></button>
+            <button class="tb-btn" onclick="insertSyntax('`','`')" title="Inline Code" aria-label="Inline Code"><span class="material-icons" aria-hidden="true">code</span></button>
+            <button class="tb-btn" onclick="insertSyntax('\n```\n','\n```')" title="Code Block" aria-label="Code Block"><span class="material-icons" aria-hidden="true">integration_instructions</span></button>
             <div class="toolbar-sep"></div>
-            <button class="tb-btn" onclick="insertSyntax('## ','')" title="Heading H2" aria-label="Heading H2"><span class="material-icons">title</span></button>
-            <button class="tb-btn" onclick="insertSyntax('\n> ','')" title="Blockquote" aria-label="Blockquote"><span class="material-icons">format_quote</span></button>
-            <button class="tb-btn" onclick="insertSyntax('\n- ','')" title="Bullet List" aria-label="Bullet List"><span class="material-icons">format_list_bulleted</span></button>
-            <button class="tb-btn" onclick="insertSyntax('\n1. ','')" title="Numbered List" aria-label="Numbered List"><span class="material-icons">format_list_numbered</span></button>
-            <button class="tb-btn" onclick="insertSyntax('[','](url)')" title="Link" aria-label="Link"><span class="material-icons">link</span></button>
-            <button class="tb-btn" onclick="insertSyntax('![alt](',')') " title="Image" aria-label="Image"><span class="material-icons">image</span></button>
+            <button class="tb-btn" onclick="insertSyntax('## ','')" title="Heading H2" aria-label="Heading H2"><span class="material-icons" aria-hidden="true">title</span></button>
+            <button class="tb-btn" onclick="insertSyntax('\n> ','')" title="Blockquote" aria-label="Blockquote"><span class="material-icons" aria-hidden="true">format_quote</span></button>
+            <button class="tb-btn" onclick="insertSyntax('\n- ','')" title="Bullet List" aria-label="Bullet List"><span class="material-icons" aria-hidden="true">format_list_bulleted</span></button>
+            <button class="tb-btn" onclick="insertSyntax('\n1. ','')" title="Numbered List" aria-label="Numbered List"><span class="material-icons" aria-hidden="true">format_list_numbered</span></button>
+            <button class="tb-btn" onclick="insertSyntax('[','](url)')" title="Link" aria-label="Link"><span class="material-icons" aria-hidden="true">link</span></button>
+            <button class="tb-btn" onclick="insertSyntax('![alt](',')') " title="Image" aria-label="Image"><span class="material-icons" aria-hidden="true">image</span></button>
             <div class="toolbar-sep"></div>
             <div class="table-picker-wrap" id="table-picker-wrap">
-              <button class="tb-btn" id="table-picker-btn" onclick="toggleTablePicker(event)" title="Insert Table">
-                <span class="material-icons">table_chart</span><span class="tb-label">Table</span>
+              <button class="tb-btn" id="table-picker-btn" onclick="toggleTablePicker(event)" title="Insert Table" aria-haspopup="true" aria-expanded="false">
+                <span class="material-icons" aria-hidden="true">table_chart</span><span class="tb-label">Table</span>
               </button>
-              <div class="table-picker-popup" id="table-picker-popup">
+              <div class="table-picker-popup" id="table-picker-popup" role="dialog" aria-label="Table size picker">
                 <div class="table-picker-label">Insert Table</div>
-                <div class="table-picker-grid" id="table-picker-grid"></div>
-                <div class="table-picker-size" id="table-picker-size">Hover to select size</div>
+                <div class="table-picker-grid" id="table-picker-grid" role="grid"></div>
+                <div class="table-picker-size" id="table-picker-size" aria-live="polite">Hover to select size</div>
                 <div class="table-picker-actions">
-                  <button class="btn-tonal btn-export-html" style="flex:1;font-size:.75rem;height:28px;border-radius:100px;" onclick="insertTableCustom()">
-                    <span class="material-icons" style="font-size:13px">edit</span> Custom size
+                  <button class="btn-tonal btn-export-html" style="flex:1;font-size:.75rem;height:28px;border-radius:100px;" onclick="insertTableCustom()" aria-label="Insert custom size table">
+                    <span class="material-icons" style="font-size:13px" aria-hidden="true">edit</span> Custom size
                   </button>
                 </div>
               </div>
             </div>
             <div class="toolbar-sep"></div>
-            <button class="tb-btn" onclick="loadSample()" title="Load sample markdown">
-              <span class="material-icons">auto_awesome</span><span class="tb-label">Sample</span>
+            <button class="tb-btn" onclick="loadSample()" title="Load sample markdown" aria-label="Load sample markdown">
+              <span class="material-icons" aria-hidden="true">auto_awesome</span><span class="tb-label">Sample</span>
             </button>
-            <button class="tb-btn" onclick="clearEditor()" title="Clear editor">
-              <span class="material-icons">delete_outline</span>
+            <button class="tb-btn" onclick="clearEditor()" title="Clear editor" aria-label="Clear all editor content">
+              <span class="material-icons" aria-hidden="true">delete_outline</span>
             </button>
           </div>
 
           <!-- ROW 2: Diagrams -->
-          <div class="editor-toolbar editor-toolbar--diagrams" role="toolbar" aria-label="Diagrams">
+          <div class="editor-toolbar editor-toolbar--diagrams" role="toolbar" aria-label="Diagram templates">
             <span class="tb-row-label">Diagrams</span>
             <div class="toolbar-sep"></div>
-            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('flowchart')" title="Insert Flowchart" aria-label="Flowchart">
-              <span class="material-icons">account_tree</span><span class="tb-label">Flowchart</span>
+            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('flowchart')" title="Insert Flowchart" aria-label="Insert Flowchart template">
+              <span class="material-icons" aria-hidden="true">account_tree</span><span class="tb-label">Flowchart</span>
             </button>
-            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('sequence')" title="Insert Sequence Diagram" aria-label="Sequence Diagram">
-              <span class="material-icons">swap_horiz</span><span class="tb-label">Sequence</span>
+            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('sequence')" title="Insert Sequence Diagram" aria-label="Insert Sequence Diagram template">
+              <span class="material-icons" aria-hidden="true">swap_horiz</span><span class="tb-label">Sequence</span>
             </button>
-            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('pie')" title="Insert Pie Chart" aria-label="Pie Chart">
-              <span class="material-icons">pie_chart</span><span class="tb-label">Pie</span>
+            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('pie')" title="Insert Pie Chart" aria-label="Insert Pie Chart template">
+              <span class="material-icons" aria-hidden="true">pie_chart</span><span class="tb-label">Pie</span>
             </button>
-            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('gantt')" title="Insert Gantt Chart" aria-label="Gantt Chart">
-              <span class="material-icons">view_timeline</span><span class="tb-label">Gantt</span>
+            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('gantt')" title="Insert Gantt Chart" aria-label="Insert Gantt Chart template">
+              <span class="material-icons" aria-hidden="true">view_timeline</span><span class="tb-label">Gantt</span>
             </button>
-            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('class')" title="Insert Class Diagram" aria-label="Class Diagram">
-              <span class="material-icons">schema</span><span class="tb-label">Class</span>
+            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('class')" title="Insert Class Diagram" aria-label="Insert Class Diagram template">
+              <span class="material-icons" aria-hidden="true">schema</span><span class="tb-label">Class</span>
             </button>
-            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('er')" title="Insert ER Diagram" aria-label="ER Diagram">
-              <span class="material-icons">device_hub</span><span class="tb-label">ER</span>
+            <button class="tb-btn tb-btn--diagram" onclick="insertDiagram('er')" title="Insert ER Diagram" aria-label="Insert ER Diagram template">
+              <span class="material-icons" aria-hidden="true">device_hub</span><span class="tb-label">ER</span>
             </button>
           </div>
 
@@ -227,25 +227,25 @@
             aria-label="Markdown editor"
           ></textarea>
 
-          <div class="stat-bar" id="editor-stats" aria-live="polite">
-            <span>Lines: <strong id="stat-lines">0</strong></span>
-            <span>Words: <strong id="stat-words">0</strong></span>
-            <span>Chars: <strong id="stat-chars">0</strong></span>
-            <span>Read: <strong id="stat-read">0 min</strong></span>
-            <div class="stat-bar__goal" id="stat-goal-wrap" title="Word count goal (500 words)">
-              <span id="stat-goal-lbl" style="font-size:.7rem;color:var(--c-text-2);">Goal</span>
-              <div class="stat-bar__goal-bar" aria-hidden="true">
+          <div class="stat-bar" id="editor-stats">
+            <span aria-live="polite">Lines: <strong id="stat-lines">0</strong></span>
+            <span aria-live="polite">Words: <strong id="stat-words">0</strong></span>
+            <span aria-live="polite">Chars: <strong id="stat-chars">0</strong></span>
+            <span aria-live="polite">Read: <strong id="stat-read">0 min</strong></span>
+            <div class="stat-bar__goal" id="stat-goal-wrap" title="Word count goal (500 words)" aria-label="Writing goal progress">
+              <span id="stat-goal-lbl" style="font-size:.7rem;color:var(--c-text-2);" aria-hidden="true">Goal</span>
+              <div class="stat-bar__goal-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="goal-progress-bar">
                 <div class="stat-bar__goal-fill" id="stat-goal-fill"></div>
               </div>
             </div>
           </div>
 
           <!-- Desktop export bar for editor -->
-          <div class="export-bar">
+          <div class="export-bar" role="toolbar" aria-label="Export options">
             <span class="export-bar__label">Export:</span>
-            <button class="btn-tonal btn-export-html" onclick="exportHTML('editor')"><span class="material-icons">code</span> HTML</button>
-            <button class="btn-tonal btn-export-pdf"  onclick="exportPDF('editor')"><span class="material-icons">picture_as_pdf</span> PDF</button>
-            <button class="btn-tonal btn-export-word" onclick="exportWord('editor')"><span class="material-icons">text_snippet</span> Word</button>
+            <button class="btn-tonal btn-export-html" onclick="exportHTML('editor')"><span class="material-icons" aria-hidden="true">code</span> HTML</button>
+            <button class="btn-tonal btn-export-pdf"  onclick="exportPDF('editor')"><span class="material-icons" aria-hidden="true">picture_as_pdf</span> PDF</button>
+            <button class="btn-tonal btn-export-word" onclick="exportWord('editor')"><span class="material-icons" aria-hidden="true">text_snippet</span> Word</button>
           </div>
         </div>
 
@@ -253,23 +253,23 @@
         <div class="resizer" id="pane-resizer"></div>
 
         <!-- RIGHT: Preview -->
-        <div class="card preview-pane" id="preview-pane">
+        <div class="card preview-pane" id="preview-pane" role="region" aria-label="Markdown live preview">
           <div class="card-header">
             <span class="card-header__title">
               <span class="material-icons">visibility</span> Live Preview
             </span>
             <div class="card-header__spacer"></div>
-            <span class="sync-dot" id="sync-dot" title="Scroll synced"></span>
+            <span class="sync-dot" id="sync-dot" title="Scroll synced" aria-hidden="true"></span>
           </div>
           <div class="preview-outer" id="preview-outer">
             <!-- Copy full preview button -->
             <button class="preview-copy-btn" id="preview-copy-btn" onclick="copyPreviewMarkdown()" title="Copy Markdown source" aria-label="Copy markdown source">
-              <span class="material-icons">content_copy</span>
+              <span class="material-icons" aria-hidden="true">content_copy</span>
               <span id="preview-copy-label">Copy MD</span>
             </button>
-            <div class="preview-content" id="editor-preview">
+            <div class="preview-content" id="editor-preview" aria-live="polite">
               <div class="preview-empty" id="editor-empty-state">
-                <span class="material-icons">article</span>
+                <span class="material-icons" aria-hidden="true">article</span>
                 <div class="preview-empty__title">Nothing yet</div>
                 <div class="preview-empty__sub">Start typing Markdown on the left to see your formatted preview here instantly.</div>
               </div>
@@ -281,50 +281,50 @@
     </div>
 
     <!-- ==================== FILE UPLOAD ==================== -->
-    <div class="mode-panel" id="panel-upload">
+    <div class="mode-panel" id="panel-upload" role="tabpanel" aria-labelledby="tab-upload">
       <div class="card">
         <div class="card-header">
-          <span class="card-header__title"><span class="material-icons">cloud_upload</span> Upload Markdown File</span>
+          <span class="card-header__title"><span class="material-icons" aria-hidden="true">cloud_upload</span> Upload Markdown File</span>
         </div>
         <div style="padding:20px;">
           <div class="upload-zone" id="drop-zone"
             onclick="document.getElementById('file-input').click()"
             ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)"
-            role="button" tabindex="0" aria-label="Upload markdown file">
-            <div class="upload-zone__icon"><span class="material-icons">description</span></div>
+            role="button" tabindex="0" aria-label="Upload markdown file. Drag and drop or click to browse.">
+            <div class="upload-zone__icon"><span class="material-icons" aria-hidden="true">description</span></div>
             <div class="upload-zone__title">Drop your .md file here</div>
             <div class="upload-zone__sub">Drag &amp; drop a Markdown file, or click to browse</div>
             <span class="upload-zone__chip">.md &amp; .markdown</span>
           </div>
-          <input type="file" id="file-input" accept=".md,text/markdown,.markdown" onchange="handleFileInput(event)"/>
-          <div class="file-info" id="file-info">
-            <span class="material-icons">check_circle</span>
+          <input type="file" id="file-input" accept=".md,text/markdown,.markdown" onchange="handleFileInput(event)" aria-hidden="true" tabindex="-1"/>
+          <div class="file-info" id="file-info" role="status">
+            <span class="material-icons" aria-hidden="true">check_circle</span>
             <span id="file-name-display">file.md</span>
             <div style="flex:1"></div>
-            <button class="tb-btn" onclick="clearUpload()">
-              <span class="material-icons" style="font-size:15px">close</span> Clear
+            <button class="tb-btn" onclick="clearUpload()" aria-label="Clear uploaded file">
+              <span class="material-icons" style="font-size:15px" aria-hidden="true">close</span> Clear
             </button>
           </div>
         </div>
       </div>
 
-      <div class="card card--elevated" id="upload-preview-card" style="display:none;">
+      <div class="card card--elevated" id="upload-preview-card" style="display:none;" role="region" aria-label="Uploaded file preview">
         <div class="card-header">
-          <span class="card-header__title"><span class="material-icons">preview</span> Preview</span>
+          <span class="card-header__title"><span class="material-icons" aria-hidden="true">preview</span> Preview</span>
           <div class="card-header__spacer"></div>
           <span class="card-header__badge" id="upload-word-count">0 words</span>
         </div>
         <div class="preview-outer" id="upload-preview-outer">
-          <button class="preview-copy-btn" id="upload-copy-btn" onclick="copyPreviewMarkdown('upload')" title="Copy Markdown source">
-            <span class="material-icons">content_copy</span> Copy MD
+          <button class="preview-copy-btn" id="upload-copy-btn" onclick="copyPreviewMarkdown('upload')" title="Copy Markdown source" aria-label="Copy markdown source">
+            <span class="material-icons" aria-hidden="true">content_copy</span> Copy MD
           </button>
-          <div class="preview-content" id="upload-preview"></div>
+          <div class="preview-content" id="upload-preview" aria-live="polite"></div>
         </div>
-        <div class="export-bar">
+        <div class="export-bar" role="toolbar" aria-label="Export options">
           <span class="export-bar__label">Export:</span>
-          <button class="btn-tonal btn-export-html" onclick="exportHTML('upload')"><span class="material-icons">code</span> HTML</button>
-          <button class="btn-tonal btn-export-pdf"  onclick="exportPDF('upload')"><span class="material-icons">picture_as_pdf</span> PDF</button>
-          <button class="btn-tonal btn-export-word" onclick="exportWord('upload')"><span class="material-icons">text_snippet</span> Word</button>
+          <button class="btn-tonal btn-export-html" onclick="exportHTML('upload')"><span class="material-icons" aria-hidden="true">code</span> HTML</button>
+          <button class="btn-tonal btn-export-pdf"  onclick="exportPDF('upload')"><span class="material-icons" aria-hidden="true">picture_as_pdf</span> PDF</button>
+          <button class="btn-tonal btn-export-word" onclick="exportWord('upload')"><span class="material-icons" aria-hidden="true">text_snippet</span> Word</button>
         </div>
       </div>
     </div>
@@ -364,16 +364,16 @@
       <div class="footer-grid">
         <!-- Column 1: Brand -->
         <div class="footer-col footer-col--brand">
-          <a class="footer-logo" href="javascript:void(0)">
-            <div class="footer-logo__icon"><span class="material-icons">article</span></div>
+          <a class="footer-logo" href="javascript:void(0)" aria-label="Easy Markdown home">
+            <div class="footer-logo__icon" aria-hidden="true"><span class="material-icons">article</span></div>
             <span class="footer-logo__text">Easy <span>Markdown</span></span>
           </a>
           <p class="footer-tagline">Write, preview and export Markdown instantly.</p>
           <div class="dev-badge">
-            <span class="material-icons">code</span> Made for developers
+            <span class="material-icons" aria-hidden="true">code</span> Made for developers
           </div>
-          <div class="markdown-tip" id="footer-tip">
-            <span class="material-icons">tips_and_updates</span>
+          <div class="markdown-tip" id="footer-tip" role="status" aria-live="polite">
+            <span class="material-icons" aria-hidden="true">tips_and_updates</span>
             <span>Tip: Use <code>***</code> for a horizontal divider.</span>
           </div>
         </div>
@@ -404,17 +404,17 @@
         <div class="footer-col">
           <h4 class="footer-title">Community</h4>
           <div class="footer-social-new">
-            <a href="https://github.com/gowhamr/markflow" target="_blank" class="social-icon-btn" aria-label="GitHub">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+            <a href="https://github.com/gowhamr/markflow" target="_blank" class="social-icon-btn" aria-label="View source on GitHub">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
             </a>
-            <a href="javascript:void(0)" class="social-icon-btn" aria-label="Twitter">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
+            <a href="javascript:void(0)" class="social-icon-btn" aria-label="Follow on Twitter">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
             </a>
-            <a href="javascript:void(0)" class="social-icon-btn" aria-label="Email">
-              <span class="material-icons">mail_outline</span>
+            <a href="javascript:void(0)" class="social-icon-btn" aria-label="Send us an email">
+              <span class="material-icons" aria-hidden="true">mail_outline</span>
             </a>
           </div>
-          <div class="footer-m-symbol">
+          <div class="footer-m-symbol" aria-hidden="true">
             <span class="material-icons">markdown</span>
           </div>
         </div>
@@ -424,13 +424,13 @@
         <div class="footer-bar__left">
           &copy; 2026 Easy Markdown. No tracking. No cookies.
         </div>
-        <div class="footer-bar__center">
-          Built with <span class="material-icons" style="font-size:14px;color:var(--c-error);margin:0 2px;">favorite</span> vanilla JS &amp; Markdown
+        <div class="footer-bar__center" role="note" aria-label="Credits">
+          Built with <span class="material-icons" style="font-size:14px;color:var(--c-error);margin:0 2px;" aria-hidden="true">favorite</span> vanilla JS &amp; Markdown
         </div>
         <div class="footer-bar__right">
-          <span class="v-badge">v1.4.0</span>
-          <div class="footer-status-minimal">
-            <span class="status-dot-minimal"></span>
+          <span class="v-badge" aria-label="Current version 1.4.0">v1.4.0</span>
+          <div class="footer-status-minimal" role="status">
+            <span class="status-dot-minimal" aria-hidden="true"></span>
             Online
           </div>
         </div>
