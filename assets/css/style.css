@@ -1080,3 +1080,49 @@
       transition: top 0.2s;
     }
     .skip-link:focus { top: 10px; }
+
+/* ─── PDF Export Mode (Theme Isolation) ────────── */
+.export-mode {
+  background: #ffffff !important;
+  color: #111111 !important;
+}
+
+.export-mode, .export-mode * {
+  animation: none !important;
+  transition: none !important;
+  transition-duration: 0s !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.export-mode [data-theme="dark"], 
+.export-mode [data-theme="dark"] * {
+  /* Force override any dark theme specific colors */
+  background-color: #ffffff !important;
+  color: #111111 !important;
+  border-color: #dddddd !important;
+}
+
+/* Ensure code blocks and tables are print-safe */
+.export-mode pre, .export-mode code {
+  background: #f6f8fa !important;
+  color: #111111 !important;
+  border: 1px solid #ddd !important;
+  white-space: pre-wrap !important;
+  word-break: break-all !important;
+}
+
+.export-mode table {
+  background: #ffffff !important;
+  border-collapse: collapse !important;
+}
+
+.export-mode th {
+  background: #f1f3f4 !important;
+}
+
+.export-mode .mermaid-wrapper svg {
+  filter: none !important;
+}

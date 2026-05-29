@@ -198,78 +198,123 @@ function exportHTML(source) {
   showSnackbar('HTML file downloaded!', 'check_circle');
 }
 
-function exportPDF(source) {
+async function exportPDF(source) {
   const content = getCleanPreviewEl(source);
   if (!content || !content.innerHTML.trim()) { showSnackbar('Nothing to export.', 'warning'); return; }
   
-  // Prepare SVGs for strict bounding within the PDF
-  content.querySelectorAll('svg').forEach(svg => {
-    svg.setAttribute('width', '100%');
-    svg.removeAttribute('height');
-    svg.style.width = '100%';
-    svg.style.height = 'auto';
-    svg.style.maxWidth = '100%';
-    svg.style.display = 'block';
-  });
+  showSnackbar('Preparing PDF engine...', 'sync');
+  document.body.classList.add('export-mode');
 
-  // Create a wrapper element appended to the very top of the body
-  // This prevents the browser from using the current window scroll position as an offset
-  const wrapper = document.createElement('div');
-  wrapper.style.cssText = 'position: absolute; top: 0; left: 0; width: 800px; z-index: -9999; background: white; text-align: left;';
+  // 1. Create Isolation Master Container
+  const master = document.createElement('div');
+  master.className = 'export-mode pdf-export-master';
+  // Fixed width ensures consistent layout capture
+  master.style.cssText = 'position: absolute; top: 0; left: 0; width: 850px; z-index: -9999; background: white; padding: 40px;';
   
-  wrapper.innerHTML = `
-    <div style="font-family: -apple-system, system-ui, sans-serif; color: #111; line-height: 1.6; padding: 20px;">
-      <style>
-        .pdf-print-container h1 { font-size: 24pt; color: #1a73e8; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; }
-        .pdf-print-container h2 { font-size: 18pt; color: #1a73e8; margin-top: 25px; }
-        .pdf-print-container h3 { font-size: 14pt; color: #1a73e8; margin-top: 20px; }
-        .pdf-print-container p { margin-bottom: 12pt; font-size: 11pt; }
-        .pdf-print-container pre { background: #f6f8fa; padding: 15px; border-radius: 6px; border: 1px solid #ddd; font-size: 10pt; white-space: pre-wrap; word-break: break-all; }
-        .pdf-print-container code { font-family: monospace; background: #f3f3f3; padding: 2px 4px; border-radius: 3px; }
-        .pdf-print-container table { width: 100% !important; border-collapse: collapse; margin: 20px 0; table-layout: fixed; page-break-inside: avoid; }
-        .pdf-print-container th, .pdf-print-container td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 10.5pt; word-break: break-word; }
-        .pdf-print-container th { background: #f8f9fa; font-weight: bold; }
-        .pdf-print-container img, .pdf-print-container svg { max-width: 100% !important; height: auto !important; display: block; margin: 25px auto; page-break-inside: avoid; }
-        .pdf-print-container blockquote { border-left: 5px solid #1a73e8; padding: 10px 20px; background: #f0f7ff; margin: 20px 0; font-style: italic; }
-        .pdf-print-container ul, .pdf-print-container ol { padding-left: 25px; margin-bottom: 12pt; }
-        .pdf-print-container li { margin-bottom: 6pt; }
-      </style>
-      <div class="pdf-print-container">${content.innerHTML}</div>
-    </div>
-  `;
+  const container = document.createElement('div');
+  container.className = 'pdf-print-container';
+  container.innerHTML = content.innerHTML;
+  master.appendChild(container);
+  document.body.appendChild(master);
 
-  document.body.appendChild(wrapper);
+  try {
+    // 2. Render Stabilization
+    await document.fonts.ready;
+    const images = Array.from(master.querySelectorAll('img'));
+    await Promise.all(images.map(img => {
+      if (img.complete) return Promise.resolve();
+      return new Promise(r => { img.onload = r; img.onerror = r; });
+    }));
+    
+    // Multiple frames and timeout to ensure Mermaid/Highlight.js layouts are stable
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    
+    // Explicitly wait for Mermaid spinners to disappear
+    const waitForMermaid = async () => {
+      const maxWait = 10; // 5 seconds max
+      let count = 0;
+      while (master.querySelector('.spinner') && count < maxWait) {
+        await new Promise(r => setTimeout(r, 500));
+        count++;
+      }
+    };
+    await waitForMermaid();
+    await new Promise(r => setTimeout(r, 300));
 
-  const opt = {
-    margin:       12,
-    filename:     getExportFilename('pdf'),
-    image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { 
-      scale: 2, 
-      useCORS: true, 
-      letterRendering: true,
-      // CRITICAL FIX: Forces capture to start at Y=0, ignoring window scroll
-      scrollY: 0, 
-      scrollX: 0,
-      windowWidth: 800
-    },
-    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
-  };
+    const totalHeight = master.scrollHeight;
+    const width = master.scrollWidth;
+    
+    // 3. Dynamic DPI Scaling
+    let scale = 2;
+    if (totalHeight > 10000) scale = 1.6;
+    if (totalHeight > 20000) scale = 1.2;
+    
+    // Browser Canvas Limit: ~16k x 16k or 268M total pixels
+    const MAX_PIXELS = 250000000; 
+    while ((width * totalHeight * scale * scale) > MAX_PIXELS && scale > 0.8) {
+      scale -= 0.1;
+    }
 
-  showSnackbar('Generating PDF...', 'sync');
-  
-  // Small timeout ensures CSS is applied and SVGs are scaled before capture
-  setTimeout(() => {
-    html2pdf().set(opt).from(wrapper).save().then(() => {
-      showSnackbar('PDF downloaded!', 'check_circle');
-      document.body.removeChild(wrapper);
-    }).catch(err => {
-      console.error('PDF Error:', err);
-      showSnackbar('PDF export failed. Try again.', 'error');
-      if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
+    // 4. Section Chunking (To prevent single giant canvas memory overflow)
+    const MAX_CHUNK_HEIGHT = 8000; 
+    const chunks = [];
+    let currentChunk = document.createElement('div');
+    currentChunk.className = 'pdf-print-container';
+    let currentHeight = 0;
+
+    Array.from(container.children).forEach(child => {
+      const h = child.offsetHeight || 100;
+      if (currentHeight + h > MAX_CHUNK_HEIGHT && currentChunk.children.length > 0) {
+        chunks.push(currentChunk);
+        currentChunk = document.createElement('div');
+        currentChunk.className = 'pdf-print-container';
+        currentHeight = 0;
+      }
+      currentChunk.appendChild(child.cloneNode(true));
+      currentHeight += h;
     });
-  }, 300);
+    if (currentChunk.children.length > 0) chunks.push(currentChunk);
+
+    const filename = getExportFilename('pdf');
+    showSnackbar(`Exporting ${chunks.length} sections...`, 'sync');
+
+    // 5. Sequential Production Rendering
+    const opt = {
+      margin: 12,
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: scale, 
+        useCORS: true, 
+        letterRendering: true,
+        logging: false,
+        scrollY: 0, 
+        scrollX: 0
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+
+    // Use html2pdf worker to chain the sections into a single PDF
+    let worker = html2pdf().set(opt).from(chunks[0]).toPdf();
+
+    for (let i = 1; i < chunks.length; i++) {
+      worker = worker.get('pdf').then(pdf => {
+        pdf.addPage();
+        return worker.from(chunks[i]).toContainer().toCanvas().toPdf();
+      });
+    }
+
+    await worker.save();
+    showSnackbar('PDF Exported Successfully!', 'check_circle');
+
+  } catch (err) {
+    console.error('PDF Export Error:', err);
+    showSnackbar('PDF export failed. Try a shorter document.', 'error');
+  } finally {
+    if (document.body.contains(master)) document.body.removeChild(master);
+    document.body.classList.remove('export-mode');
+  }
 }
 
 function exportWord(source) {
